@@ -1,21 +1,21 @@
-ALGORITMO Gerar_Formulas_KSAT(n, num_vars, min_clauses, max_clausulas, min_vars, max_vars, k)
+ALGORITMO Gerar_Formulas_KSAT(n, num_lits, min_clauses, max_clausulas, min_lits, max_lits, k)
     INICIO
-        literais <- ["X1" ... "Xnum_vars"]
+        literais <- ["X1" ... "Xnum_lits"]
         valoracao <- {lit : sorteio(V/F) PARA cada lit em literais}
 
         PARA i DE 1 ATÉ n FAÇA
             num_clausulas ← sorteio(min_clauses, max_clausulas)
-            max_vars_formula ← sorteio(min_vars, max_vars)
+            max_lits_formula ← sorteio(min_lits, max_lits)
 
-            vars_escolhidas ← sorteio_subconjunto(literais, max_vars_formula)
+            lits_escolhidos ← sorteio_subconjunto(literais, max_lits_formula)
 
             formula <- []
 
             PARA c DE 1 ATÉ num_clausulas FAÇA
-                clausula_vars ← sorteio_subconjunto(vars_escolhidas, minimo(k, tamanho(vars_escolhidas)))
+                clausula_lits ← sorteio_subconjunto(lits_escolhidos, minimo(k, tamanho(lits_escolhidos)))
                 clausula <- []
 
-                PARA cada var em clausula_vars FAÇA
+                PARA cada var em clausula_lits FAÇA
                     SE sorteio(V/F) = VERDADEIRO
                         clausula.adicionar(var)
                     SENAO
@@ -29,7 +29,7 @@ ALGORITMO Gerar_Formulas_KSAT(n, num_vars, min_clauses, max_clausulas, min_vars,
             fnc <- juntar([ "(" + juntar(clausula, " ∨ ") + ")" PARA cada clausula em formula ], " ∧ ")
             ESCREVA("Fórmula", i)
             ESCREVA("FNC:", conjuncao_disjuncao(formula))
-            PARA cada var em vars_escolhidas FAÇA
+            PARA cada var em lits_escolhidos FAÇA
                 ESCREVA(var, "=", valoracao[var])
             FIM PARA
         FIM PARA
