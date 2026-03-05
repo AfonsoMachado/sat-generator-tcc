@@ -21,6 +21,8 @@ Observação importante:
 import random
 from dataclasses import dataclass
 from typing import List, Tuple, Dict, Iterable
+from pysat.examples.rc2 import RC2
+from pysat.formula import WCNF
 
 # ---------- Tipos auxiliares ----------
 Literal = Tuple[str, bool]  # (nome_da_variavel, negado?)
@@ -50,7 +52,7 @@ class SATConfig:
     # (se faltar variável distinta, a fórmula é reduzida).
     # Nota: por padrão é mantido strict=False para permitir degradação (1..k)
     # e não repetir variável na mesma cláusula.
-    strict: bool = False
+    strict: bool = True
 
 
 # ---------- Geração de nomes: 'A', 'B', ..., 'Z', 'AA', ... ----------
@@ -180,6 +182,87 @@ def generate_k_sat_formula(
     formula = [c for c in formula if len(c) > 0]
     return formula
 
+def convert_formula_to_pysat(formula: Formula):
+    """
+    Converte Formula (com variáveis nomeadas) para CNF numérica (PySAT).
+    Retorna (cnf, var_map) onde:
+      - cnf: List[List[int]]
+      - var_map: Dict[str, int]  (ex: {"A":1, "B":2, ...})
+    """
+    var_map: Dict[str, int] = {}
+    next_id = 1
+    cnf: List[List[int]] = []
+
+    for clause in formula:
+        new_clause: List[int] = []
+        for var, neg in clause:
+            if var not in var_map:
+                var_map[var] = next_id
+                next_id += 1
+
+            lit = var_map[var]
+            if neg:
+                lit = -lit
+
+            new_clause.append(lit)
+
+        cnf.append(new_clause)
+
+    return cnf, var_map
+
+
+def format_pysat_cnf(cnf: List[List[int]]) -> str:
+    """
+    Formata CNF no estilo DIMACS (cada cláusula termina com 0).
+    Exemplo: '1 -2 3 0  -1 4 0'
+    """
+    return "  ".join(" ".join(map(str, clause)) + " 0" for clause in cnf)
+
+
+def solve_with_rc2(formula: Formula):
+    """
+    Resolve uma fórmula CNF usando o solver RC2 (Max-SAT puro).
+
+    Passos:
+    1. Converte a fórmula para o formato PySAT (inteiros).
+    2. Cria uma estrutura WCNF.
+    3. Adiciona todas as cláusulas com peso 1 (Max-SAT puro).
+    4. Executa o solver RC2.
+
+    Retorna:
+        model  -> modelo encontrado pelo solver
+        cost   -> número de cláusulas violadas
+        cnf    -> fórmula no formato PySAT
+        var_map -> mapeamento variável -> inteiro
+    """
+
+    cnf, var_map = convert_formula_to_pysat(formula)
+
+    wcnf = WCNF()
+
+    for clause in cnf:
+        wcnf.append(clause, weight=1)
+
+    with RC2(wcnf) as rc2:
+        model = rc2.compute()
+        cost = rc2.cost
+
+    return model, cost, cnf, var_map
+
+
+def model_to_assignment(model, var_map):
+    """
+    Converte o modelo retornado pelo RC2 para uma valoração de variáveis.
+
+    model: lista de inteiros (ex: [1, -2, 3])
+    var_map: mapeamento {variavel: indice}
+    """
+    assignment = {}
+
+    for var, idx in var_map.items():
+        assignment[var] = idx in model
+
+    return assignment
 
 # ---------- Função principal ----------
 def generate_formulas_set(config: SATConfig):
@@ -224,41 +307,73 @@ def generate_formulas_set(config: SATConfig):
             strict=config.strict,
         )
 
+        model, cost, cnf, var_map = solve_with_rc2(formula)
+        pysat_str = format_pysat_cnf(cnf)
+        solver_assignment = model_to_assignment(model, var_map)
+
         formula_str = format_formula(formula)
         used_vars = sorted({var for clause in formula for (var, _) in clause})
         assignment_used = {v: global_assignment[v] for v in used_vars}
-        sat, total, final_value = evaluate_formula(formula, global_assignment)
+        # sat, total, final_value = evaluate_formula(formula, global_assignment)
+        sat, total, final_value = evaluate_formula(formula, solver_assignment)
 
         print(f"Fórmula {idx}:")
         print(f"  - Nº de cláusulas (K): {k_clauses}")
         print(f"  - Máx. de variáveis consideradas (M): {m_vars}")
+
         k_value = config.k_literals_per_clause
-        print(f"  - k-SAT (alvo de literais/ cláusula): {k_value}")
+        print(f"  - k-SAT (alvo de literais/cláusula): {k_value}")
+
         print(f"  - FNC: {formula_str if formula_str else '(vazia)'}")
-        print(
-            f"  - Variáveis usadas ({len(used_vars)}): "
-            f"{', '.join(used_vars) if used_vars else '-'}"
-        )
-        if used_vars:
-            val_str = ", ".join(
+        print(f"  - PySAT CNF: {pysat_str if pysat_str else '(vazia)'}")
+
+        # --------- Valorações ---------
+        if assignment_used:
+            val_generated = ", ".join(
                 f"{v}={'1' if b else '0'}" for v, b in assignment_used.items()
             )
-            print(f"  - Valoração (usadas): {val_str}")
         else:
-            print("  - Valoração (usadas): -")
-        print(f"  - Cláusulas satisfeitas: {sat}/{total}")
+            val_generated = "-"
+
+        if solver_assignment:
+            val_solver = ", ".join(
+                f"{v}={'1' if b else '0'}" for v, b in solver_assignment.items()
+            )
+        else:
+            val_solver = "-"
+
+        print(f"  - Valoração gerada: {val_generated}")
+        print(f"  - Valoração RC2: {val_solver}")
+
+        # --------- Resultados ---------
+        print(f"  - Modelo RC2: {model}")
+        print(f"  - Custo RC2 (cláusulas violadas): {cost}")
+
+        print(f"  - Cláusulas satisfeitas (modelo RC2): {sat}/{total}")
         print(
-            "  - Valor lógico da fórmula (conjunção): "
+            "  - Valor lógico da fórmula (modelo RC2): "
             f"{'1 (Verdadeiro)' if final_value else '0 (Falso)'}\n"
         )
 
-        resultados.append((idx, formula_str, assignment_used, final_value))
-
+        resultados.append(
+            (idx, formula_str, pysat_str, assignment_used, solver_assignment, final_value, model, cost)
+        )
+    # --------- Resumo final ---------
     # --------- Resumo final ---------
     print("=" * 60)
     print("RESUMO FINAL: Fórmulas e suas valorações\n")
-    for idx, formula_str, assignment_used, final_value in resultados:
-        val_str = ", ".join(f"{v}={b}" for v, b in assignment_used.items())
+
+    for idx, formula_str, pysat_str, assignment_used, solver_assignment, final_value, model, cost in resultados:
+        val_generated = ", ".join(f"{v}={b}" for v, b in assignment_used.items()) if assignment_used else "-"
+        val_solver = ", ".join(f"{v}={b}" for v, b in solver_assignment.items()) if solver_assignment else "-"
+
         print(f"F{idx}: {formula_str if formula_str else '(vazia)'}")
-        print(f"    Valoração: {val_str if val_str else '-'}")
-        print(f"    Valor lógico da fórmula: {final_value}\n")
+        print(f"    PySAT CNF: {pysat_str if pysat_str else '(vazia)'}")
+        print(f"    Modelo RC2: {model}")
+        print(f"    Custo RC2 (cláusulas violadas): {cost}")
+        print(f"    Valoração gerada: {val_generated}")
+        print(f"    Valoração RC2: {val_solver}")
+        print(
+            f"    Valor lógico da fórmula (modelo RC2): "
+            f"{'1 (Verdadeiro)' if final_value else '0 (Falso)'}\n"
+        )

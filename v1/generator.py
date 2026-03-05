@@ -193,6 +193,8 @@ def generate_formulas_set(config: SATConfig):
         )
 
         formula_str = format_formula(formula)
+        cnf, var_map = convert_formula_to_pysat(formula)
+        pysat_str = format_pysat_cnf(cnf)
         used_vars = sorted({var for clause in formula for (var, _) in clause})
         assignment_used = {v: global_assignment[v] for v in used_vars}
         sat, total, final_value = evaluate_formula(formula, global_assignment)
@@ -211,17 +213,53 @@ def generate_formulas_set(config: SATConfig):
         print(f"  - Cláusulas satisfeitas: {sat}/{total}")
         print(f"  - Valor lógico da fórmula (conjunção): {'1 (Verdadeiro)' if final_value else '0 (Falso)'}\n")
 
-        resultados.append((idx, formula_str, assignment_used, final_value))
+        resultados.append((idx, formula_str, pysat_str, assignment_used, final_value))
 
     # --------- Resumo final ---------
     print("="*60)
     print("RESUMO FINAL: Fórmulas e suas valorações\n")
-    for idx, formula_str, assignment_used, final_value in resultados:
+    for idx, formula_str, pysat_str, assignment_used, final_value in resultados:
         val_str = ", ".join(f"{v}={b}" for v, b in assignment_used.items())
         print(f"F{idx}: {formula_str if formula_str else '(vazia)'}")
+        print(f"    PySAT CNF: {pysat_str if pysat_str else '(vazia)'}")
         print(f"    Valoração: {val_str if val_str else '-'}")
         print(f"    Valor lógico da fórmula: {final_value}\n")
 
+def convert_formula_to_pysat(formula: Formula):
+    """
+    Converte Formula (com variáveis nomeadas) para CNF numérica (PySAT).
+    Retorna (cnf, var_map) onde:
+      - cnf: List[List[int]]
+      - var_map: Dict[str, int]  (ex: {"A":1, "B":2, ...})
+    """
+    var_map: Dict[str, int] = {}
+    next_id = 1
+    cnf: List[List[int]] = []
+
+    for clause in formula:
+        new_clause: List[int] = []
+        for var, neg in clause:
+            if var not in var_map:
+                var_map[var] = next_id
+                next_id += 1
+
+            lit = var_map[var]
+            if neg:
+                lit = -lit
+
+            new_clause.append(lit)
+
+        cnf.append(new_clause)
+
+    return cnf, var_map
+
+
+def format_pysat_cnf(cnf: List[List[int]]) -> str:
+    """
+    Formata CNF no estilo DIMACS (cada cláusula termina com 0).
+    Exemplo: '1 -2 3 0  -1 4 0'
+    """
+    return "  ".join(" ".join(map(str, clause)) + " 0" for clause in cnf)
 
 
 # ---------- Perfis prontos ----------
@@ -233,7 +271,8 @@ def profile_2sat(seed: int | None = 42) -> SATConfig:
         max_vars_range=(2, 5),
         k_literals_per_clause=2,
         seed=seed,
-        strict=False,
+        # O ideal é não permitir degradação de cláusulas para gerar todas com exatamente 2 literais
+        strict=True,
     )
 
 def profile_3sat(seed: int | None = 42) -> SATConfig:
@@ -244,7 +283,8 @@ def profile_3sat(seed: int | None = 42) -> SATConfig:
         max_vars_range=(1, 100),
         k_literals_per_clause=3,
         seed=seed,
-        strict=False,
+        # O ideal é não permitir degradação de cláusulas para gerar todas com exatamente 3 literais
+        strict=True,
     )
 
 # ---------- Execução de exemplo ----------
