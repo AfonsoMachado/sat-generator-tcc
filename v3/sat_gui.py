@@ -9,7 +9,7 @@ import threading
 import time
 
 
-def run_experiment(entries, frame_graph, label_timer, label_progress, label_eta, progress_bar):
+def run_experiment(entries, frame_graph, label_timer, label_progress, progress_bar):
     running_flag = {"running": True}
     start_time = time.perf_counter()
 
@@ -38,21 +38,12 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, label_eta,
 
                 elapsed = time.perf_counter() - start_time
 
-                rate = done / elapsed if elapsed > 0 else 0
-                remaining = (total - done) / rate if rate > 0 else 0
-
-                mins = int(remaining // 60)
-                secs = int(remaining % 60)
-
                 frame_graph.after(0, lambda: update_ui(
                     done,
                     total,
                     elapsed,
-                    mins,
-                    secs,
                     label_timer,
                     label_progress,
-                    label_eta,
                     progress_bar
                 ))
 
@@ -69,13 +60,11 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, label_eta,
     threading.Thread(target=worker, daemon=True).start()
 
 
-def update_ui(done, total, elapsed, mins, secs, label_timer, label_progress, label_eta, progress_bar):
+def update_ui(done, total, elapsed, label_timer, label_progress, progress_bar):
 
     label_timer.config(text=f"Tempo de execução: {elapsed:.2f} s")
 
     label_progress.config(text=f"Progresso: {done} / {total} instâncias")
-
-    label_eta.config(text=f"Tempo restante estimado: {mins:02d}m {secs:02d}s")
 
     progress_bar["value"] = done / total * 100
 
@@ -114,9 +103,6 @@ def gui_runner():
     label_progress = ttk.Label(root, text="Progresso: 0")
     label_progress.pack()
 
-    label_eta = ttk.Label(root, text="Tempo restante estimado: --")
-    label_eta.pack()
-
     progress_bar = ttk.Progressbar(root, length=400)
     progress_bar.pack(pady=5)
 
@@ -131,7 +117,6 @@ def gui_runner():
             frame_graph,
             label_timer,
             label_progress,
-            label_eta,
             progress_bar
         )
     ).pack(pady=10)
@@ -163,7 +148,7 @@ def draw_graph(frame, data):
     for M, time_spent, sat in data:
         groups[M].append((time_spent, sat))
 
-    M_values = []
+    m_values = []
     avg_times = []
     avg_sat = []
 
@@ -174,7 +159,7 @@ def draw_graph(frame, data):
         avg_time = sum(v[0] for v in values) / len(values)
         avg_s = sum(v[1] for v in values) / len(values)
 
-        M_values.append(M)
+        m_values.append(M)
         avg_times.append(avg_time)
         avg_sat.append(avg_s * 100)
 
@@ -187,7 +172,7 @@ def draw_graph(frame, data):
     ax1.set_xlabel("Número de cláusulas (M)")
     ax1.set_ylabel("Satisfazibilidade (%)", color="blue")
 
-    ax1.plot(M_values, avg_sat, color="blue", label="Satisfazibilidade")
+    ax1.plot(m_values, avg_sat, color="blue", label="Satisfazibilidade")
 
     ax1.tick_params(axis="y", labelcolor="blue")
 
@@ -201,7 +186,7 @@ def draw_graph(frame, data):
 
     ax2.set_ylabel("Tempo médio (s)", color="orange")
 
-    ax2.plot(M_values, avg_times, color="orange", label="Tempo")
+    ax2.plot(m_values, avg_times, color="orange", label="Tempo")
 
     ax2.tick_params(axis="y", labelcolor="orange")
 
@@ -209,21 +194,28 @@ def draw_graph(frame, data):
     # Ajuste automático eixo X
     # -------------------------------
 
-    xmin = min(M_values)
-    xmax = max(M_values)
+    xmin = min(m_values)
+    xmax = max(m_values)
 
     padding_x = (xmax - xmin) * 0.05
 
     ax1.set_xlim(xmin - padding_x, xmax + padding_x)
 
     # -------------------------------
-    # legenda combinada
+    # legenda no topo
     # -------------------------------
 
     lines = ax1.get_lines() + ax2.get_lines()
     labels = [l.get_label() for l in lines]
 
-    ax1.legend(lines, labels)
+    fig.legend(
+        lines,
+        labels,
+        loc="upper center",
+        ncol=2
+    )
+
+    fig.tight_layout(rect=[0, 0, 1, 0.9])
 
     # -------------------------------
     # limpar gráfico anterior
