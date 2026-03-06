@@ -9,7 +9,7 @@ import threading
 import time
 
 
-def run_experiment(entries, frame_graph, label_timer, label_progress, progress_bar):
+def run_experiment(entries, frame_graph, label_timer, label_progress, progress_bar, solver_var):
     running_flag = {"running": True}
     start_time = time.perf_counter()
 
@@ -25,6 +25,7 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
             min_clauses = int(entries["min_clauses"].get())
             max_clauses = int(entries["max_clauses"].get())
             seed = int(entries["seed"].get()) if entries["seed"].get() else None
+            solver_type = solver_var.get()
 
             config = SATConfig(
                 num_formulas=num_formulas,
@@ -47,7 +48,11 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
                     progress_bar
                 ))
 
-            data = generate_formulas_set(config, progress_callback=progress)
+            data = generate_formulas_set(
+                config,
+                progress_callback=progress,
+                solver_type=solver_type
+            )
 
             running_flag["running"] = False
 
@@ -97,6 +102,23 @@ def gui_runner():
 
         entries[key] = entry
 
+    ttk.Label(frame_inputs, text="Tipo de solver").grid(row=len(labels), column=0, sticky="w")
+
+    solver_var = tk.StringVar(value="Max-SAT")
+
+    solver_selector = ttk.Combobox(
+        frame_inputs,
+        textvariable=solver_var,
+        state="readonly",
+        values=[
+            "Max-SAT",
+            "Partial Max-SAT",
+            "Weighted Partial Max-SAT"
+        ]
+    )
+
+    solver_selector.grid(row=len(labels), column=1)
+
     label_timer = ttk.Label(root, text="Tempo de execução: 0.00 s")
     label_timer.pack()
 
@@ -117,7 +139,8 @@ def gui_runner():
             frame_graph,
             label_timer,
             label_progress,
-            progress_bar
+            progress_bar,
+            solver_var
         )
     ).pack(pady=10)
 

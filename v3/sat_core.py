@@ -29,12 +29,14 @@ def generate_random_cnf(num_vars: int, num_clauses: int, k: int):
 
     for _ in range(num_clauses):
 
-        vars_clause = random.sample(range(1, num_vars + 1), k)
+        # vetor de candidatos [-N..-1, 1..N] reconstruído a cada cláusula
+        # para garantir que cada cláusula tenha literais distintos
+        candidates = list(range(-num_vars, 0)) + list(range(1, num_vars + 1))
 
-        clause = [
-            v if random.random() < 0.5 else -v
-            for v in vars_clause
-        ]
+        # sorteia K literais distintos diretamente
+        # impedindo repetição de átomos entre os disponíveis
+        # para escolha na formação das cláusulas
+        clause = random.sample(candidates, k)
 
         cnf.append(clause)
 
@@ -66,12 +68,88 @@ def solve_instance(args):
 
     return (M, elapsed, satisf)
 
+# ---------------------------------------------------------
+# solver PARTIAL MAX-SAT
+# ---------------------------------------------------------
+
+def solve_instance_partial_maxsat(args):
+
+    N, M, k = args
+
+    cnf = generate_random_cnf(N, M, k)
+
+    wcnf = WCNF()
+
+    split = int(M * 0.5)  # metade hard, metade soft
+
+    hard = cnf[:split]
+    soft = cnf[split:]
+
+    # hard clauses
+    for clause in hard:
+        wcnf.append(clause)
+
+    # soft clauses
+    for clause in soft:
+        wcnf.append(clause, weight=1)
+
+    start = time.perf_counter()
+
+    with RC2(wcnf) as rc2:
+        rc2.compute()
+        cost = rc2.cost
+
+    elapsed = time.perf_counter() - start
+
+    satisf = (M - cost) / M if M else 0
+
+    return (M, elapsed, satisf)
+
+
+# ---------------------------------------------------------
+# solver WEIGHTED PARTIAL MAX-SAT
+# ---------------------------------------------------------
+
+def solve_instance_weighted_partial_maxsat(args):
+
+    N, M, k = args
+
+    cnf = generate_random_cnf(N, M, k)
+
+    wcnf = WCNF()
+
+    split = int(M * 0.5)
+
+    hard = cnf[:split]
+    soft = cnf[split:]
+
+    # hard clauses
+    for clause in hard:
+        wcnf.append(clause)
+
+    # soft clauses com pesos aleatórios
+    for clause in soft:
+        weight = random.randint(1, 10)
+        wcnf.append(clause, weight=weight)
+
+    start = time.perf_counter()
+
+    with RC2(wcnf) as rc2:
+        rc2.compute()
+        cost = rc2.cost
+
+    elapsed = time.perf_counter() - start
+
+    satisf = (M - cost) / M if M else 0
+
+    return (M, elapsed, satisf)
+
 
 # ---------------------------------------------------------
 # experimento paralelo
 # ---------------------------------------------------------
 
-def generate_formulas_set(config: SATConfig, progress_callback=None):
+def generate_formulas_set(config: SATConfig, progress_callback=None, solver_type="Max-SAT"):
 
     if config.seed is not None:
         random.seed(config.seed)
@@ -91,7 +169,19 @@ def generate_formulas_set(config: SATConfig, progress_callback=None):
 
     with ProcessPoolExecutor() as executor:
 
-        futures = [executor.submit(solve_instance, inst) for inst in instances]
+        if solver_type == "Max-SAT":
+            solver = solve_instance
+
+        elif solver_type == "Partial Max-SAT":
+            solver = solve_instance_partial_maxsat
+
+        elif solver_type == "Weighted Partial Max-SAT":
+            solver = solve_instance_weighted_partial_maxsat
+
+        else:
+            solver = solve_instance
+
+        futures = [executor.submit(solver, inst) for inst in instances]
 
         for i, future in enumerate(as_completed(futures), 1):
 
