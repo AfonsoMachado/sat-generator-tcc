@@ -1,5 +1,5 @@
 """
-Gerador e executor de instâncias Max-SAT / Partial Max-SAT / Weighted Partial Max-SAT.
+Gerador e executor de instâncias Max-sat / Partial Max-sat / Weighted Partial Max-sat.
 
 Este módulo implementa:
 
@@ -13,7 +13,7 @@ REQUISITOS DO ALGORITMO DE GERAÇÃO (conforme descrição do texto):
 
 O gerador deve garantir:
 
-1. Impedimento da repetição de átomos dentro de uma cláusula
+1. Impedimento da repetição de átomos numa cláusula
 2. Cada cláusula deve possuir exatamente K literais
 3. A cada cláusula deve ser reconstruído um vetor de candidatos
 4. O vetor de candidatos deve conter todos os inteiros entre -N e N (exceto 0)
@@ -44,9 +44,9 @@ EXPERIMENTOS
 
 O módulo suporta três tipos de experimento:
 
-- Max-SAT
-- Partial Max-SAT
-- Weighted Partial Max-SAT
+- Max-sat
+- Partial Max-sat
+- Weighted Partial Max-sat
 
 Os experimentos são executados em paralelo utilizando ProcessPoolExecutor.
 """
@@ -60,7 +60,7 @@ from typing import Tuple
 from pysat.examples.rc2 import RC2
 from pysat.formula import WCNF
 
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
 # ------------------------------------------------------------------
@@ -71,24 +71,8 @@ from concurrent.futures import ProcessPoolExecutor
 class SATConfig:
     """
     Estrutura de configuração dos experimentos SAT.
-
-    Attributes
-    ----------
-    num_formulas : int
-        Número de fórmulas geradas para cada valor de M.
-
-    num_global_variables : int
-        Número total de variáveis proposicionais (N).
-
-    clauses_range : Tuple[int, int]
-        Intervalo de número de cláusulas M.
-
-    k_literals_per_clause : int
-        Número de literais por cláusula (k-SAT).
-
-    seed : int | None
-        Seed opcional para reprodutibilidade.
     """
+
     num_formulas: int
     num_global_variables: int
     clauses_range: Tuple[int, int]
@@ -104,56 +88,17 @@ def generate_random_cnf(num_vars: int, num_clauses: int, k: int):
     """
     Gera uma fórmula CNF aleatória k-SAT.
 
-    A implementação segue os requisitos do algoritmo descrito no texto:
-
-    1) A cada cláusula é criado um vetor de candidatos
-    2) O vetor contém todos os literais possíveis [-N..-1, 1..N]
-    3) Os literais são selecionados sem repetição
-    4) Cada cláusula contém exatamente K literais
-    5) Um vetor separado representa a cláusula em construção
-
-    Parameters
-    ----------
-    num_vars : int
-        Número de variáveis proposicionais (N).
-
-    num_clauses : int
-        Número de cláusulas da fórmula (M).
-
-    k : int
-        Número de literais por cláusula.
-
-    Returns
-    -------
-    List[List[int]]
-        Fórmula CNF no formato aceito pelo PySAT.
+    A implementação segue os requisitos do algoritmo descrito no texto.
     """
 
     cnf = []
 
     for _ in range(num_clauses):
 
-        # ---------------------------------------------------------
-        # Vetor de candidatos
-        #
-        # Representa todos os literais possíveis:
-        #   [-N .. -1, 1 .. N]
-        #
-        # Este vetor é reconstruído a cada cláusula conforme
-        # descrito no algoritmo original.
-        # ---------------------------------------------------------
-
+        # vetor de candidatos reconstruído a cada cláusula
         candidates = list(range(-num_vars, 0)) + list(range(1, num_vars + 1))
 
-        # ---------------------------------------------------------
-        # Seleção de K literais distintos
-        #
-        # random.sample garante:
-        #  - ausência de repetição
-        #  - comportamento equivalente à "flag" mencionada
-        #    no algoritmo original.
-        # ---------------------------------------------------------
-
+        # seleção sem repetição
         clause = random.sample(candidates, k)
 
         cnf.append(clause)
@@ -166,9 +111,6 @@ def generate_random_cnf(num_vars: int, num_clauses: int, k: int):
 # ------------------------------------------------------------------
 
 def solve_instance(args):
-    """
-    Resolve uma instância Max-SAT utilizando RC2.
-    """
 
     N, M, k = args
 
@@ -195,11 +137,6 @@ def solve_instance(args):
 # ------------------------------------------------------------------
 
 def solve_instance_partial_maxsat(args):
-    """
-    Resolve uma instância Partial Max-SAT.
-
-    Metade das cláusulas são tratadas como hard e metade como soft.
-    """
 
     N, M, k = args
 
@@ -236,11 +173,6 @@ def solve_instance_partial_maxsat(args):
 # ------------------------------------------------------------------
 
 def solve_instance_weighted_partial_maxsat(args):
-    """
-    Resolve uma instância Weighted Partial Max-SAT.
-
-    As cláusulas soft recebem pesos aleatórios.
-    """
 
     N, M, k = args
 
@@ -273,28 +205,6 @@ def solve_instance_weighted_partial_maxsat(args):
 
 
 # ------------------------------------------------------------------
-# Processamento em lote (otimização de paralelismo)
-# ------------------------------------------------------------------
-
-def solve_batch(batch_args):
-    """
-    Resolve um lote de instâncias em sequência.
-
-    Esta estratégia reduz o overhead de criação de tarefas
-    no multiprocessing quando há muitas instâncias.
-    """
-
-    solver, batch = batch_args
-
-    results = []
-
-    for args in batch:
-        results.append(solver(args))
-
-    return results
-
-
-# ------------------------------------------------------------------
 # Execução do experimento
 # ------------------------------------------------------------------
 
@@ -302,11 +212,11 @@ def generate_formulas_set(config: SATConfig, progress_callback=None, solver_type
     """
     Executa o experimento SAT completo.
 
-    A função:
+    Fluxo:
 
     1) Gera todas as instâncias do experimento
-    2) Distribui o trabalho entre múltiplos processos
-    3) Executa os solvers selecionados
+    2) Distribui cada instância para um processo
+    3) Executa o solver selecionado
     4) Coleta métricas de tempo e satisfatibilidade
     """
 
@@ -337,34 +247,16 @@ def generate_formulas_set(config: SATConfig, progress_callback=None, solver_type
 
     cpu = os.cpu_count()
 
-    batch_size = max(
-        50,
-        len(instances) // (cpu * 8)
-    )
-
-    batches = [
-        instances[i:i + batch_size]
-        for i in range(0, len(instances), batch_size)
-    ]
-
-    total_instances = len(instances)
-
     with ProcessPoolExecutor(max_workers=cpu) as executor:
 
-        futures = executor.map(
-            solve_batch,
-            [(solver, batch) for batch in batches]
-        )
+        futures = [executor.submit(solver, inst) for inst in instances]
 
-        completed = 0
+        for i, future in enumerate(as_completed(futures), 1):
 
-        for batch_result in futures:
-
-            results.extend(batch_result)
-
-            completed += len(batch_result)
+            result = future.result()
+            results.append(result)
 
             if progress_callback:
-                progress_callback(completed, total_instances)
+                progress_callback(i, len(instances))
 
     return results

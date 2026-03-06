@@ -60,7 +60,7 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
 
         except Exception as e:
             running_flag["running"] = False
-            frame_graph.after(0, lambda: messagebox.showerror("Erro", str(e)))
+            frame_graph.after(0, lambda err=e: messagebox.showerror("Erro", str(err)))
 
     threading.Thread(target=worker, daemon=True).start()
 
