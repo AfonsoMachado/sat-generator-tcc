@@ -18,11 +18,8 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
 
     reset_ui(frame_graph, label_timer, label_progress, progress_bar)
 
-    start_time = time.perf_counter()
-
-    start_timer(label_timer, start_time, running_flag)
-
     partial_results = []
+    start_time = {"value": None}
 
     def collect_result(res):
         partial_results.append(res)
@@ -52,7 +49,12 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
                 if stop_flag["stop"]:
                     return False
 
-                elapsed = time.perf_counter() - start_time
+                # inicia o timer apenas quando a primeira instância terminar
+                if start_time["value"] is None:
+                    start_time["value"] = time.perf_counter()
+                    frame_graph.after(0, lambda: start_timer(label_timer, start_time["value"], running_flag))
+
+                elapsed = time.perf_counter() - start_time["value"]
 
                 frame_graph.after(0, lambda: update_ui(
                     done,
