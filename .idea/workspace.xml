@@ -4,16 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ba717fca-6df9-4a11-ac0a-e62ad18c5829" name="Changes" comment="Adiciona geradores de fórmulas k-SAT e refatora a geração de cláusulas para evitar duplicidade de literais">
-      <change afterPath="$PROJECT_DIR$/v2/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/v2/sat_core.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/v2/sat_gui.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/v2/tests.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/v4/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/v4/sat_core.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/v4/sat_gui.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/v4/tests.py" afterDir="false" />
+    <list default="true" id="ba717fca-6df9-4a11-ac0a-e62ad18c5829" name="Changes" comment="Adiciona interface gráfica para geração de fórmulas k-SAT e implementa execução paralela com temporizador">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v1/generate_to_pysat_fast.py" beforeDir="false" afterPath="$PROJECT_DIR$/v1/generate_to_pysat_fast.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v4/sat_core.py" beforeDir="false" afterPath="$PROJECT_DIR$/v4/sat_core.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -294,7 +288,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772811686137</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Adiciona interface gráfica para geração de fórmulas k-SAT e implementa execução paralela com temporizador">
+      <option name="closed" value="true" />
+      <created>1772819317800</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1772819317800</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -308,7 +310,8 @@
     <MESSAGE value="Remove ETA display and refactor variable names in experiment graphing" />
     <MESSAGE value="Implementa seleção de solver no experimento e refatora a geração de CNF para evitar literais repetidos" />
     <MESSAGE value="Adiciona geradores de fórmulas k-SAT e refatora a geração de cláusulas para evitar duplicidade de literais" />
-    <option name="LAST_COMMIT_MESSAGE" value="Adiciona geradores de fórmulas k-SAT e refatora a geração de cláusulas para evitar duplicidade de literais" />
+    <MESSAGE value="Adiciona interface gráfica para geração de fórmulas k-SAT e implementa execução paralela com temporizador" />
+    <option name="LAST_COMMIT_MESSAGE" value="Adiciona interface gráfica para geração de fórmulas k-SAT e implementa execução paralela com temporizador" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$pytest_for_v3_tests_test_generate_clause_respects_k.coverage" NAME="pytest for v3.tests.test_generate_clause_respects_k Coverage Results" MODIFIED="1772743007286" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

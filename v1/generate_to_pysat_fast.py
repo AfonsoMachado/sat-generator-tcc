@@ -33,7 +33,8 @@ def generate_k_sat_formula_fast_2(num_vars, num_clauses, k):
 
     for _ in range(num_clauses):
 
-        candidates = list(range(-num_vars, 0)) + list(range(1, num_vars + 1))
+        candidates = list(range(-num_vars, 0))
+        candidates.extend(range(1, num_vars + 1))
 
         clause = []
 

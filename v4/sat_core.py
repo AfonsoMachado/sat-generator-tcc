@@ -7,7 +7,6 @@ from pysat.examples.rc2 import RC2
 from pysat.formula import WCNF
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
-import os
 
 
 @dataclass
@@ -42,6 +41,30 @@ def generate_random_cnf(num_vars: int, num_clauses: int, k: int):
 
     return cnf
 
+# def generate_random_cnf_2(num_vars: int, num_clauses: int, k: int):
+#
+#     cnf = []
+#
+#     for _ in range(num_clauses):
+#
+#         candidates = list(range(-num_vars, 0))
+#         candidates.extend(range(1, num_vars + 1))
+#
+#         clause = []
+#
+#         for _ in range(k):
+#
+#             idx = random.randrange(len(candidates))
+#             lit = candidates[idx]
+#
+#             clause.append(lit)
+#
+#             candidates.pop(idx)
+#
+#         cnf.append(clause)
+#
+#     return cnf
+
 
 # ---------------------------------------------------------
 # solver
@@ -66,7 +89,7 @@ def solve_instance(args):
 
     satisf = (M - cost) / M if M else 0
 
-    return (M, elapsed, satisf)
+    return M, elapsed, satisf
 
 # ---------------------------------------------------------
 # solver PARTIAL MAX-SAT
@@ -103,7 +126,7 @@ def solve_instance_partial_maxsat(args):
 
     satisf = (M - cost) / M if M else 0
 
-    return (M, elapsed, satisf)
+    return M, elapsed, satisf
 
 
 # ---------------------------------------------------------
