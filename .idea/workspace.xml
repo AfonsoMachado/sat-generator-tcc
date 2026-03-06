@@ -4,10 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ba717fca-6df9-4a11-ac0a-e62ad18c5829" name="Changes" comment="Remove ETA display and refactor variable names in experiment graphing">
+    <list default="true" id="ba717fca-6df9-4a11-ac0a-e62ad18c5829" name="Changes" comment="Implementa seleção de solver no experimento e refatora a geração de CNF para evitar literais repetidos">
+      <change afterPath="$PROJECT_DIR$/v1/generate_to_pysat_fast.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/v1/generator_to_pysat.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v3/sat_core.py" beforeDir="false" afterPath="$PROJECT_DIR$/v3/sat_core.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v3/sat_gui.py" beforeDir="false" afterPath="$PROJECT_DIR$/v3/sat_gui.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -18,6 +18,13 @@
     <persistenceIdMap>
       <entry key="_C:/Users/afons/Desktop/TCC/Gerador de Fórmulas" value="3AXdOjWlV1gP3bQgGUz3alkZZPe" />
     </persistenceIdMap>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -73,7 +80,7 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager" selected="Python.main">
+  <component name="RunManager" selected="Python.generator">
     <configuration name="generator" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Gerador de Fórmulas" />
       <option name="ENV_FILES" value="" />
@@ -191,9 +198,9 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.generator" />
         <item itemvalue="Python.main" />
         <item itemvalue="Python.generator_with_gui" />
-        <item itemvalue="Python.generator" />
         <item itemvalue="Python.teste" />
         <item itemvalue="Python tests.pytest for v3.tests.test_generate_clause_respects_k" />
       </list>
@@ -258,7 +265,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772763333214</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Implementa seleção de solver no experimento e refatora a geração de CNF para evitar literais repetidos">
+      <option name="closed" value="true" />
+      <created>1772810228970</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1772810228970</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -270,13 +285,14 @@
     <MESSAGE value="Aprimora a geração de fórmulas para incluir pesos e implementa execução paralela com temporizador" />
     <MESSAGE value="melhroando gráfico" />
     <MESSAGE value="Remove ETA display and refactor variable names in experiment graphing" />
-    <option name="LAST_COMMIT_MESSAGE" value="Remove ETA display and refactor variable names in experiment graphing" />
+    <MESSAGE value="Implementa seleção de solver no experimento e refatora a geração de CNF para evitar literais repetidos" />
+    <option name="LAST_COMMIT_MESSAGE" value="Implementa seleção de solver no experimento e refatora a geração de CNF para evitar literais repetidos" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$pytest_for_v3_tests_test_generate_clause_respects_k.coverage" NAME="pytest for v3.tests.test_generate_clause_respects_k Coverage Results" MODIFIED="1772743007286" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$pytest_for_v3_tests_test_generate_variable_names.coverage" NAME="pytest for v3.tests.test_generate_variable_names Coverage Results" MODIFIED="1772742990942" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$generator_with_gui.coverage" NAME="generator_with_gui Coverage Results" MODIFIED="1772751846154" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/v0" />
-    <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$generator.coverage" NAME="generator Coverage Results" MODIFIED="1772749055684" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/v1" />
+    <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$generator.coverage" NAME="generator Coverage Results" MODIFIED="1772811111824" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/v1" />
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$main.coverage" NAME="main Coverage Results" MODIFIED="1772809939777" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/v3" />
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$teste.coverage" NAME="teste Coverage Results" MODIFIED="1772744512242" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/RC2" />
   </component>
