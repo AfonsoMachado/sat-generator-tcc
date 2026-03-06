@@ -11,9 +11,10 @@ import time
 stop_flag = {"stop": False}
 running_flag = {"running": False}
 
-def run_experiment(entries, frame_graph, label_timer, label_progress, progress_bar, solver_var):
+def run_experiment(entries, frame_graph, label_timer, label_progress, progress_bar, solver_var, run_button):
     running_flag["running"] = True
     stop_flag["stop"] = False
+    run_button.config(state="disabled")
 
     reset_ui(frame_graph, label_timer, label_progress, progress_bar)
 
@@ -77,6 +78,7 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
             if partial_results:
                 frame_graph.after(0, lambda: draw_graph(frame_graph, partial_results))
 
+            frame_graph.after(0, lambda: run_button.config(state="normal"))
 
         except RuntimeError as e:
             if str(e) == "STOP_REQUESTED":
@@ -84,6 +86,7 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
                 frame_graph.after(0, lambda: draw_graph(frame_graph, partial_results))
             else:
                 frame_graph.after(0, lambda err=e: messagebox.showerror("Erro", str(err)))
+            frame_graph.after(0, lambda: run_button.config(state="normal"))
 
     threading.Thread(target=worker, daemon=True).start()
 
@@ -176,18 +179,24 @@ def gui_runner():
     button_frame = ttk.Frame(root)
     button_frame.pack(pady=10)
 
-    ttk.Button(
+    run_button = ttk.Button(
         button_frame,
-        text="Executar Experimento",
+        text="Executar Experimento"
+    )
+
+    run_button.pack(side="left", padx=5)
+
+    run_button.config(
         command=lambda: run_experiment(
             entries,
             frame_graph,
             label_timer,
             label_progress,
             progress_bar,
-            solver_var
+            solver_var,
+            run_button
         )
-    ).pack(side="left", padx=5)
+    )
 
     ttk.Button(
         button_frame,
