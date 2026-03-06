@@ -175,20 +175,59 @@ def draw_graph(frame, data):
         avg_s = sum(v[1] for v in values) / len(values)
 
         M_values.append(M)
-        avg_times.append(avg_time * 1000)
+        avg_times.append(avg_time)
         avg_sat.append(avg_s * 100)
 
-    fig, ax = plt.subplots(figsize=(7,4))
+    fig, ax1 = plt.subplots(figsize=(7,4))
 
-    ax.plot(M_values, avg_sat, color="blue", label="Porcentagem")
-    ax.plot(M_values, avg_times, color="orange", label="Tempo")
+    # -------------------------------
+    # Eixo esquerdo (satisfazibilidade)
+    # -------------------------------
 
-    ax.set_xlabel("Número de cláusulas (M)")
-    ax.set_ylabel("Porcentagem")
+    ax1.set_xlabel("Número de cláusulas (M)")
+    ax1.set_ylabel("Satisfazibilidade (%)", color="blue")
 
-    ax.yaxis.set_major_formatter(ticker.PercentFormatter())
+    ax1.plot(M_values, avg_sat, color="blue", label="Satisfazibilidade")
 
-    ax.legend()
+    ax1.tick_params(axis="y", labelcolor="blue")
+
+    ax1.yaxis.set_major_formatter(ticker.PercentFormatter())
+
+    # -------------------------------
+    # Eixo direito (tempo)
+    # -------------------------------
+
+    ax2 = ax1.twinx()
+
+    ax2.set_ylabel("Tempo médio (s)", color="orange")
+
+    ax2.plot(M_values, avg_times, color="orange", label="Tempo")
+
+    ax2.tick_params(axis="y", labelcolor="orange")
+
+    # -------------------------------
+    # Ajuste automático eixo X
+    # -------------------------------
+
+    xmin = min(M_values)
+    xmax = max(M_values)
+
+    padding_x = (xmax - xmin) * 0.05
+
+    ax1.set_xlim(xmin - padding_x, xmax + padding_x)
+
+    # -------------------------------
+    # legenda combinada
+    # -------------------------------
+
+    lines = ax1.get_lines() + ax2.get_lines()
+    labels = [l.get_label() for l in lines]
+
+    ax1.legend(lines, labels)
+
+    # -------------------------------
+    # limpar gráfico anterior
+    # -------------------------------
 
     for widget in frame.winfo_children():
         widget.destroy()
