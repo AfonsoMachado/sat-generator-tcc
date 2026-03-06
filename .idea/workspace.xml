@@ -4,9 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ba717fca-6df9-4a11-ac0a-e62ad18c5829" name="Changes" comment="Implementa seleção de solver no experimento e refatora a geração de CNF para evitar literais repetidos">
-      <change afterPath="$PROJECT_DIR$/v1/generate_to_pysat_fast.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/v1/generator_to_pysat.py" afterDir="false" />
+    <list default="true" id="ba717fca-6df9-4a11-ac0a-e62ad18c5829" name="Changes" comment="Adiciona geradores de fórmulas k-SAT e refatora a geração de cláusulas para evitar duplicidade de literais">
+      <change afterPath="$PROJECT_DIR$/v2/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/v2/sat_core.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/v2/sat_gui.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/v2/tests.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/v4/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/v4/sat_core.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/v4/sat_gui.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/v4/tests.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -54,32 +60,39 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python tests.pytest for v3.tests.test_generate_clause_respects_k.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.pytest for v3.tests.test_generate_variable_names.executor&quot;: &quot;Run&quot;,
-    &quot;Python.generator.executor&quot;: &quot;Run&quot;,
-    &quot;Python.generator_with_gui.executor&quot;: &quot;Run&quot;,
-    &quot;Python.main.executor&quot;: &quot;Run&quot;,
-    &quot;Python.teste.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;ai.playground.ignore.import.keys.banner.in.settings&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;settings.sync&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python tests.pytest for v3.tests.test_generate_clause_respects_k.executor": "Run",
+    "Python tests.pytest for v3.tests.test_generate_variable_names.executor": "Run",
+    "Python.generator.executor": "Run",
+    "Python.generator_with_gui.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.teste.executor": "Run",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ai.playground.ignore.import.keys.banner.in.settings": "true",
+    "git-widget-placeholder": "master",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Users/afons/Desktop/TCC/Gerador de Fórmulas/v4",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "settings.editor.selected.configurable": "settings.sync",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\afons\Desktop\TCC\Gerador de Fórmulas\v4" />
+      <recent name="C:\Users\afons\Desktop\TCC\Gerador de Fórmulas" />
+    </key>
+  </component>
   <component name="RunManager" selected="Python.generator">
     <configuration name="generator" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Gerador de Fórmulas" />
@@ -273,7 +286,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772810228970</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Adiciona geradores de fórmulas k-SAT e refatora a geração de cláusulas para evitar duplicidade de literais">
+      <option name="closed" value="true" />
+      <created>1772811686137</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1772811686137</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -286,7 +307,8 @@
     <MESSAGE value="melhroando gráfico" />
     <MESSAGE value="Remove ETA display and refactor variable names in experiment graphing" />
     <MESSAGE value="Implementa seleção de solver no experimento e refatora a geração de CNF para evitar literais repetidos" />
-    <option name="LAST_COMMIT_MESSAGE" value="Implementa seleção de solver no experimento e refatora a geração de CNF para evitar literais repetidos" />
+    <MESSAGE value="Adiciona geradores de fórmulas k-SAT e refatora a geração de cláusulas para evitar duplicidade de literais" />
+    <option name="LAST_COMMIT_MESSAGE" value="Adiciona geradores de fórmulas k-SAT e refatora a geração de cláusulas para evitar duplicidade de literais" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$pytest_for_v3_tests_test_generate_clause_respects_k.coverage" NAME="pytest for v3.tests.test_generate_clause_respects_k Coverage Results" MODIFIED="1772743007286" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
