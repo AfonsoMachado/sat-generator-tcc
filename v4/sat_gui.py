@@ -8,12 +8,23 @@ from sat_core import SATConfig, generate_formulas_set
 import threading
 import time
 
+stop_flag = {"stop": False}
+running_flag = {"running": False}
 
 def run_experiment(entries, frame_graph, label_timer, label_progress, progress_bar, solver_var):
-    running_flag = {"running": True}
+    running_flag["running"] = True
+    stop_flag["stop"] = False
+
+    reset_ui(frame_graph, label_timer, label_progress, progress_bar)
+
     start_time = time.perf_counter()
 
     start_timer(label_timer, start_time, running_flag)
+
+    partial_results = []
+
+    def collect_result(res):
+        partial_results.append(res)
 
     def worker():
 
@@ -37,6 +48,9 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
 
             def progress(done, total):
 
+                if stop_flag["stop"]:
+                    return False
+
                 elapsed = time.perf_counter() - start_time
 
                 frame_graph.after(0, lambda: update_ui(
@@ -48,22 +62,50 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
                     progress_bar
                 ))
 
+                return True
+
             data = generate_formulas_set(
                 config,
                 progress_callback=progress,
-                solver_type=solver_type
+                result_callback=collect_result,
+                solver_type=solver_type,
+                should_stop=should_stop
             )
 
             running_flag["running"] = False
 
-            frame_graph.after(0, lambda: draw_graph(frame_graph, data))
+            if partial_results:
+                frame_graph.after(0, lambda: draw_graph(frame_graph, partial_results))
 
-        except Exception as e:
-            running_flag["running"] = False
-            frame_graph.after(0, lambda err=e: messagebox.showerror("Erro", str(err)))
+
+        except RuntimeError as e:
+            if str(e) == "STOP_REQUESTED":
+                running_flag["running"] = False
+                frame_graph.after(0, lambda: draw_graph(frame_graph, partial_results))
+            else:
+                frame_graph.after(0, lambda err=e: messagebox.showerror("Erro", str(err)))
 
     threading.Thread(target=worker, daemon=True).start()
 
+def stop_experiment():
+    stop_flag["stop"] = True
+    running_flag["running"] = False
+
+def should_stop():
+    return stop_flag["stop"]
+
+def reset_ui(frame_graph, label_timer, label_progress, progress_bar):
+
+    # resetar labels
+    label_timer.config(text="Tempo de execução: 0.00 s")
+    label_progress.config(text="Progresso: 0 / 0 instâncias")
+
+    # resetar barra
+    progress_bar["value"] = 0
+
+    # limpar gráfico antigo
+    for widget in frame_graph.winfo_children():
+        widget.destroy()
 
 def update_ui(done, total, elapsed, label_timer, label_progress, progress_bar):
 
@@ -131,8 +173,11 @@ def gui_runner():
     frame_graph = ttk.Frame(root)
     frame_graph.pack(fill="both", expand=True)
 
+    button_frame = ttk.Frame(root)
+    button_frame.pack(pady=10)
+
     ttk.Button(
-        root,
+        button_frame,
         text="Executar Experimento",
         command=lambda: run_experiment(
             entries,
@@ -142,7 +187,13 @@ def gui_runner():
             progress_bar,
             solver_var
         )
-    ).pack(pady=10)
+    ).pack(side="left", padx=5)
+
+    ttk.Button(
+        button_frame,
+        text="Parar",
+        command=stop_experiment
+    ).pack(side="left", padx=5)
 
     return root
 

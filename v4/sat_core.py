@@ -208,7 +208,13 @@ def solve_instance_weighted_partial_maxsat(args):
 # Execução do experimento
 # ------------------------------------------------------------------
 
-def generate_formulas_set(config: SATConfig, progress_callback=None, solver_type="Max-SAT"):
+def generate_formulas_set(
+    config: SATConfig,
+    progress_callback=None,
+    result_callback=None,
+    solver_type="Max-SAT",
+    should_stop=None
+):
     """
     Executa o experimento SAT completo.
 
@@ -253,8 +259,15 @@ def generate_formulas_set(config: SATConfig, progress_callback=None, solver_type
 
         for i, future in enumerate(as_completed(futures), 1):
 
+            if should_stop and should_stop():
+                executor.shutdown(wait=False, cancel_futures=True)
+                break
+
             result = future.result()
             results.append(result)
+
+            if result_callback:
+                result_callback(result)
 
             if progress_callback:
                 progress_callback(i, len(instances))
