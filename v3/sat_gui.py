@@ -1,156 +1,176 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 from sat_core import SATConfig, generate_formulas_set
 
 
-def run_generator(entries, text_details, text_summary):
+def run_experiment(entries, frame_graph):
+
     try:
         num_formulas = int(entries["formulas"].get())
-        num_global_vars = int(entries["vars"].get())
+        num_vars = int(entries["vars"].get())
         k = int(entries["k"].get())
         min_clauses = int(entries["min_clauses"].get())
         max_clauses = int(entries["max_clauses"].get())
-        min_vars = int(entries["min_vars"].get())
-        max_vars = int(entries["max_vars"].get())
         seed = int(entries["seed"].get()) if entries["seed"].get() else None
 
         config = SATConfig(
             num_formulas=num_formulas,
-            num_global_variables=num_global_vars,
+            num_global_variables=num_vars,
             clauses_range=(min_clauses, max_clauses),
-            max_vars_range=(min_vars, max_vars),
             k_literals_per_clause=k,
-            seed=seed,
-            strict=False,
+            seed=seed
         )
 
-        # Captura saída
-        import io
-        import sys
+        data = generate_formulas_set(config)
 
-        old_stdout = sys.stdout
-        sys.stdout = mystdout = io.StringIO()
-
-        generate_formulas_set(config)
-
-        sys.stdout = old_stdout
-        full_output = mystdout.getvalue()
-
-        # Divide saída em duas partes
-        if "RESUMO FINAL:" in full_output:
-            details_part, summary_part = full_output.split("RESUMO FINAL:", 1)
-            summary_part = "RESUMO FINAL:" + summary_part
-        else:
-            details_part, summary_part = full_output, ""
-
-        # Atualiza coluna 1 (detalhes)
-        text_details.config(state="normal")
-        text_details.delete("1.0", tk.END)
-        text_details.insert(tk.END, details_part.strip())
-        text_details.config(state="disabled")
-
-        # Atualiza coluna 2 (resumo)
-        text_summary.config(state="normal")
-        text_summary.delete("1.0", tk.END)
-        text_summary.insert(tk.END, summary_part.strip())
-        text_summary.config(state="disabled")
+        # draw_graph(frame_graph, data)
+        draw_graph2(frame_graph, data)
 
     except Exception as e:
         messagebox.showerror("Erro", str(e))
 
 
+def draw_graph(frame, data):
+
+    from collections import defaultdict
+
+    groups = defaultdict(list)
+
+    for M, time_spent, sat in data:
+        groups[M].append((time_spent, sat))
+
+    M_vals = []
+    avg_times = []
+    avg_sat = []
+
+    for M in sorted(groups):
+
+        values = groups[M]
+
+        avg_time = sum(v[0] for v in values) / len(values)
+        avg_s = sum(v[1] for v in values) / len(values)
+
+        M_vals.append(M)
+        avg_times.append(avg_time)
+        avg_sat.append(avg_s * 100)
+
+    fig, ax1 = plt.subplots(figsize=(6,4))
+
+    ax1.set_xlabel("Número de cláusulas (M)")
+    ax1.set_ylabel("Satisfazibilidade (%)", color="blue")
+    ax1.plot(M_vals, avg_sat, color="blue")
+
+    ax2 = ax1.twinx()
+    ax2.set_ylabel("Tempo médio (s)", color="orange")
+    ax2.plot(M_vals, avg_times, color="orange")
+
+    for widget in frame.winfo_children():
+        widget.destroy()
+
+    canvas = FigureCanvasTkAgg(fig, master=frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill="both", expand=True)
+
+
 def gui_runner():
+
     root = tk.Tk()
-    root.title("Gerador de Fórmulas k-SAT")
+    root.title("Experimento Max-SAT RC2")
 
-    # Função de validação
-    def only_integers(text: str) -> bool:
-        return text == "" or text.isdigit()
+    frame_inputs = ttk.Frame(root, padding=10)
+    frame_inputs.pack(fill="x")
 
-    vcmd = (root.register(only_integers), "%P")
-
-    # Entradas
-    frame = ttk.Frame(root, padding=10)
-    frame.grid(row=0, column=0, sticky="w")
-
-    labels_defaults = [
-        ("Número de fórmulas:", "10", "formulas"),
-        ("Nº de variáveis globais:", "102", "vars"),
-        ("k (2 ou 3):", "2", "k"),
-        ("Mín cláusulas:", "2", "min_clauses"),
-        ("Máx cláusulas:", "5", "max_clauses"),
-        ("Mín variáveis:", "2", "min_vars"),
-        ("Máx variáveis:", "5", "max_vars"),
-        ("Seed (opcional):", "", "seed"),
+    labels = [
+        ("Número de fórmulas", "formulas"),
+        ("Nº variáveis", "vars"),
+        ("k", "k"),
+        ("Mín cláusulas", "min_clauses"),
+        ("Máx cláusulas", "max_clauses"),
+        ("Seed (opcional)", "seed"),
     ]
 
     entries = {}
-    for i, (lbl, default, key) in enumerate(labels_defaults):
-        ttk.Label(frame, text=lbl).grid(row=i, column=0, sticky="w")
-        e = ttk.Entry(frame, validate="key", validatecommand=vcmd)
-        e.insert(0, default)
-        e.grid(row=i, column=1)
-        entries[key] = e
 
-    # Área de saída em duas colunas
-    output_frame = ttk.Panedwindow(root, orient="horizontal")
-    output_frame.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
+    for i, (label, key) in enumerate(labels):
 
-    # Coluna 1: Detalhes
-    frame_left = ttk.Frame(output_frame)
-    text_details = tk.Text(
-        frame_left, wrap="none", width=90, height=25, state="disabled"
-    )
-    scrollbar_y1 = ttk.Scrollbar(
-        frame_left, orient="vertical", command=text_details.yview
-    )
-    scrollbar_x1 = ttk.Scrollbar(
-        frame_left, orient="horizontal", command=text_details.xview
-    )
-    text_details.configure(
-        yscrollcommand=scrollbar_y1.set, xscrollcommand=scrollbar_x1.set
-    )
+        ttk.Label(frame_inputs, text=label).grid(row=i, column=0, sticky="w")
 
-    text_details.grid(row=0, column=0, sticky="nsew")
-    scrollbar_y1.grid(row=0, column=1, sticky="ns")
-    scrollbar_x1.grid(row=1, column=0, sticky="ew")
-    frame_left.rowconfigure(0, weight=1)
-    frame_left.columnconfigure(0, weight=1)
+        entry = ttk.Entry(frame_inputs)
+        entry.grid(row=i, column=1)
 
-    # Coluna 2: Resumo
-    frame_right = ttk.Frame(output_frame)
-    text_summary = tk.Text(
-        frame_right, wrap="none", width=60, height=25, state="disabled"
-    )
-    scrollbar_y2 = ttk.Scrollbar(
-        frame_right, orient="vertical", command=text_summary.yview
-    )
-    scrollbar_x2 = ttk.Scrollbar(
-        frame_right, orient="horizontal", command=text_summary.xview
-    )
-    text_summary.configure(
-        yscrollcommand=scrollbar_y2.set, xscrollcommand=scrollbar_x2.set
-    )
+        entries[key] = entry
 
-    text_summary.grid(row=0, column=0, sticky="nsew")
-    scrollbar_y2.grid(row=0, column=1, sticky="ns")
-    scrollbar_x2.grid(row=1, column=0, sticky="ew")
-    frame_right.rowconfigure(0, weight=1)
-    frame_right.columnconfigure(0, weight=1)
-
-    # Adiciona colunas ao PanedWindow
-    output_frame.add(frame_left, weight=3)
-    output_frame.add(frame_right, weight=1)
-
-    # Botão executar
     ttk.Button(
         root,
-        text="Gerar Fórmulas",
-        command=lambda: run_generator(entries, text_details, text_summary),
-    ).grid(row=1, column=0, pady=10)
+        text="Executar Experimento",
+        command=lambda: run_experiment(entries, frame_graph)
+    ).pack(pady=10)
 
-    # Ajustes de expansão
-    root.rowconfigure(2, weight=1)
-    root.columnconfigure(0, weight=1)
+    frame_graph = ttk.Frame(root)
+    frame_graph.pack(fill="both", expand=True)
 
     return root
+
+
+def draw_graph2(frame, data):
+
+    from collections import defaultdict
+    import matplotlib.ticker as ticker
+
+    groups = defaultdict(list)
+
+    for M, time_spent, sat in data:
+        groups[M].append((time_spent, sat))
+
+    M_values = []
+    avg_times = []
+    avg_sat = []
+
+    for M in sorted(groups.keys()):
+
+        values = groups[M]
+
+        avg_time = sum(v[0] for v in values) / len(values)
+        avg_s = sum(v[1] for v in values) / len(values)
+
+        M_values.append(M)
+        avg_times.append(avg_time * 1000)   # escala visual do tempo
+        avg_sat.append(avg_s * 100)
+
+    fig, ax = plt.subplots(figsize=(7,4))
+
+    ax.plot(M_values, avg_sat, color="blue", label="Porcentagem")
+    ax.plot(M_values, avg_times, color="orange", label="Tempo")
+
+    ax.set_xlabel("Número de cláusulas (M)")
+    ax.set_ylabel("Porcentagem")
+
+    # -------- eixo X automático --------
+    xmin = min(M_values)
+    xmax = max(M_values)
+    padding_x = (xmax - xmin) * 0.05
+
+    ax.set_xlim(xmin - padding_x, xmax + padding_x)
+
+    # -------- eixo Y automático --------
+    ymax = max(max(avg_times), max(avg_sat))
+    padding_y = ymax * 0.10
+
+    ax.set_ylim(0, ymax + padding_y)
+
+    # -------- formato percentual --------
+    ax.yaxis.set_major_formatter(ticker.PercentFormatter())
+
+    ax.legend()
+
+    # limpa gráfico anterior
+    for widget in frame.winfo_children():
+        widget.destroy()
+
+    canvas = FigureCanvasTkAgg(fig, master=frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill="both", expand=True)
