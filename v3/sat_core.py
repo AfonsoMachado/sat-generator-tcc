@@ -1,10 +1,13 @@
 import random
 import time
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import Tuple, List
 
 from pysat.examples.rc2 import RC2
 from pysat.formula import WCNF
+
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import os
 
 
 @dataclass
@@ -16,69 +19,86 @@ class SATConfig:
     seed: int | None = None
 
 
+# ---------------------------------------------------------
+# geração da CNF
+# ---------------------------------------------------------
+
 def generate_random_cnf(num_vars: int, num_clauses: int, k: int):
-    """
-    Gera uma CNF aleatória k-SAT diretamente em formato PySAT.
-    """
+
     cnf = []
 
     for _ in range(num_clauses):
-        vars_clause = random.sample(range(1, num_vars + 1), k)
-        clause = []
 
-        for v in vars_clause:
-            if random.random() < 0.5:
-                clause.append(v)
-            else:
-                clause.append(-v)
+        vars_clause = random.sample(range(1, num_vars + 1), k)
+
+        clause = [
+            v if random.random() < 0.5 else -v
+            for v in vars_clause
+        ]
 
         cnf.append(clause)
 
     return cnf
 
 
-def solve_with_rc2(cnf):
-    """
-    Resolve a fórmula usando RC2 (Max-SAT puro).
-    """
+# ---------------------------------------------------------
+# solver
+# ---------------------------------------------------------
+
+def solve_instance(args):
+
+    N, M, k = args
+
+    cnf = generate_random_cnf(N, M, k)
+
     wcnf = WCNF()
-    wcnf.extend(cnf, weights=[1] * len(cnf))
+    wcnf.extend(cnf, weights=[1]*len(cnf))
 
-    for clause in cnf:
-        wcnf.append(clause, weight=1)
+    start = time.perf_counter()
 
-    with RC2(wcnf, adapt=True) as rc2:
-        model = rc2.compute()
+    with RC2(wcnf) as rc2:
+        rc2.compute()
         cost = rc2.cost
 
-    return cost
+    elapsed = time.perf_counter() - start
+
+    satisf = (M - cost) / M if M else 0
+
+    return (M, elapsed, satisf)
 
 
-def generate_formulas_set(config: SATConfig):
+# ---------------------------------------------------------
+# experimento paralelo
+# ---------------------------------------------------------
+
+def generate_formulas_set(config: SATConfig, progress_callback=None):
 
     if config.seed is not None:
         random.seed(config.seed)
-
-    experiment_data = []
 
     N = config.num_global_variables
     k = config.k_literals_per_clause
 
     min_M, max_M = config.clauses_range
 
+    instances = []
+
     for M in range(min_M, max_M + 1):
-        print(f"M = {M}")
-
         for _ in range(config.num_formulas):
+            instances.append((N, M, k))
 
-            cnf = generate_random_cnf(N, M, k)
+    results = []
 
-            start = time.perf_counter()
-            cost = solve_with_rc2(cnf)
-            elapsed = time.perf_counter() - start
+    with ProcessPoolExecutor() as executor:
 
-            satisf = (M - cost) / M if M else 0
+        futures = [executor.submit(solve_instance, inst) for inst in instances]
 
-            experiment_data.append((M, elapsed, satisf))
+        for i, future in enumerate(as_completed(futures), 1):
 
-    return experiment_data
+            result = future.result()
+            results.append(result)
+
+            if progress_callback:
+                progress_callback(i, len(instances))
+
+    return results

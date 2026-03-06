@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ba717fca-6df9-4a11-ac0a-e62ad18c5829" name="Changes" comment="Adiciona conversão de fórmulas para CNF numérica e formatação para PySAT no gerador de fórmulas">
+    <list default="true" id="ba717fca-6df9-4a11-ac0a-e62ad18c5829" name="Changes" comment="Aprimora a função de geração de fórmulas para incluir pesos e otimiza a execução do experimento com temporizador">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v3/sat_core.py" beforeDir="false" afterPath="$PROJECT_DIR$/v3/sat_core.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v3/sat_gui.py" beforeDir="false" afterPath="$PROJECT_DIR$/v3/sat_gui.py" afterDir="false" />
@@ -226,7 +226,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772751404682</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Aprimora a função de geração de fórmulas para incluir pesos e otimiza a execução do experimento com temporizador">
+      <option name="closed" value="true" />
+      <created>1772758537335</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1772758537335</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -234,14 +242,15 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Adiciona conversão de fórmulas para CNF numérica e formatação para PySAT no gerador de fórmulas" />
-    <option name="LAST_COMMIT_MESSAGE" value="Adiciona conversão de fórmulas para CNF numérica e formatação para PySAT no gerador de fórmulas" />
+    <MESSAGE value="Aprimora a função de geração de fórmulas para incluir pesos e otimiza a execução do experimento com temporizador" />
+    <option name="LAST_COMMIT_MESSAGE" value="Aprimora a função de geração de fórmulas para incluir pesos e otimiza a execução do experimento com temporizador" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$pytest_for_v3_tests_test_generate_clause_respects_k.coverage" NAME="pytest for v3.tests.test_generate_clause_respects_k Coverage Results" MODIFIED="1772743007286" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$pytest_for_v3_tests_test_generate_variable_names.coverage" NAME="pytest for v3.tests.test_generate_variable_names Coverage Results" MODIFIED="1772742990942" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$generator_with_gui.coverage" NAME="generator_with_gui Coverage Results" MODIFIED="1772751846154" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/v0" />
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$generator.coverage" NAME="generator Coverage Results" MODIFIED="1772749055684" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/v1" />
-    <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$main.coverage" NAME="main Coverage Results" MODIFIED="1772757995980" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/v3" />
+    <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$main.coverage" NAME="main Coverage Results" MODIFIED="1772761673277" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/v3" />
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$teste.coverage" NAME="teste Coverage Results" MODIFIED="1772744512242" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/RC2" />
   </component>
   <component name="github-copilot-workspace">

@@ -1,92 +1,83 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from sat_core import SATConfig, generate_formulas_set
+
 import threading
 import time
 
 
-def run_experiment(entries, frame_graph, label_timer):
+def run_experiment(entries, frame_graph, label_timer, label_progress, label_eta, progress_bar):
+    running_flag = {"running": True}
+    start_time = time.perf_counter()
 
-    start_timer(label_timer)
+    start_timer(label_timer, start_time, running_flag)
 
     def worker():
 
-        num_formulas = int(entries["formulas"].get())
-        num_vars = int(entries["vars"].get())
-        k = int(entries["k"].get())
-        min_clauses = int(entries["min_clauses"].get())
-        max_clauses = int(entries["max_clauses"].get())
-        seed = int(entries["seed"].get()) if entries["seed"].get() else None
+        try:
 
-        config = SATConfig(
-            num_formulas=num_formulas,
-            num_global_variables=num_vars,
-            clauses_range=(min_clauses, max_clauses),
-            k_literals_per_clause=k,
-            seed=seed
-        )
+            num_formulas = int(entries["formulas"].get())
+            num_vars = int(entries["vars"].get())
+            k = int(entries["k"].get())
+            min_clauses = int(entries["min_clauses"].get())
+            max_clauses = int(entries["max_clauses"].get())
+            seed = int(entries["seed"].get()) if entries["seed"].get() else None
 
-        data = generate_formulas_set(config)
+            config = SATConfig(
+                num_formulas=num_formulas,
+                num_global_variables=num_vars,
+                clauses_range=(min_clauses, max_clauses),
+                k_literals_per_clause=k,
+                seed=seed
+            )
 
-        frame_graph.after(0, lambda: draw_graph2(frame_graph, data))
+            def progress(done, total):
+
+                elapsed = time.perf_counter() - start_time
+
+                rate = done / elapsed if elapsed > 0 else 0
+                remaining = (total - done) / rate if rate > 0 else 0
+
+                mins = int(remaining // 60)
+                secs = int(remaining % 60)
+
+                frame_graph.after(0, lambda: update_ui(
+                    done,
+                    total,
+                    elapsed,
+                    mins,
+                    secs,
+                    label_timer,
+                    label_progress,
+                    label_eta,
+                    progress_bar
+                ))
+
+            data = generate_formulas_set(config, progress_callback=progress)
+
+            running_flag["running"] = False
+
+            frame_graph.after(0, lambda: draw_graph(frame_graph, data))
+
+        except Exception as e:
+            running_flag["running"] = False
+            frame_graph.after(0, lambda: messagebox.showerror("Erro", str(e)))
 
     threading.Thread(target=worker, daemon=True).start()
 
-def start_timer(label):
 
-    start = time.perf_counter()
+def update_ui(done, total, elapsed, mins, secs, label_timer, label_progress, label_eta, progress_bar):
 
-    def update():
-        elapsed = time.perf_counter() - start
-        label.config(text=f"Tempo de execução: {elapsed:.2f} s")
-        label.after(100, update)
+    label_timer.config(text=f"Tempo de execução: {elapsed:.2f} s")
 
-    update()
+    label_progress.config(text=f"Progresso: {done} / {total} instâncias")
 
-def draw_graph(frame, data):
+    label_eta.config(text=f"Tempo restante estimado: {mins:02d}m {secs:02d}s")
 
-    from collections import defaultdict
-
-    groups = defaultdict(list)
-
-    for M, time_spent, sat in data:
-        groups[M].append((time_spent, sat))
-
-    M_vals = []
-    avg_times = []
-    avg_sat = []
-
-    for M in sorted(groups):
-
-        values = groups[M]
-
-        avg_time = sum(v[0] for v in values) / len(values)
-        avg_s = sum(v[1] for v in values) / len(values)
-
-        M_vals.append(M)
-        avg_times.append(avg_time)
-        avg_sat.append(avg_s * 100)
-
-    fig, ax1 = plt.subplots(figsize=(6,4))
-
-    ax1.set_xlabel("Número de cláusulas (M)")
-    ax1.set_ylabel("Satisfazibilidade (%)", color="blue")
-    ax1.plot(M_vals, avg_sat, color="blue")
-
-    ax2 = ax1.twinx()
-    ax2.set_ylabel("Tempo médio (s)", color="orange")
-    ax2.plot(M_vals, avg_times, color="orange")
-
-    for widget in frame.winfo_children():
-        widget.destroy()
-
-    canvas = FigureCanvasTkAgg(fig, master=frame)
-    canvas.draw()
-    canvas.get_tk_widget().pack(fill="both", expand=True)
+    progress_bar["value"] = done / total * 100
 
 
 def gui_runner():
@@ -117,22 +108,52 @@ def gui_runner():
 
         entries[key] = entry
 
-    ttk.Button(
-        root,
-        text="Executar Experimento",
-        command=lambda: run_experiment(entries, frame_graph, label_timer)
-    ).pack(pady=10)
-
     label_timer = ttk.Label(root, text="Tempo de execução: 0.00 s")
     label_timer.pack()
+
+    label_progress = ttk.Label(root, text="Progresso: 0")
+    label_progress.pack()
+
+    label_eta = ttk.Label(root, text="Tempo restante estimado: --")
+    label_eta.pack()
+
+    progress_bar = ttk.Progressbar(root, length=400)
+    progress_bar.pack(pady=5)
 
     frame_graph = ttk.Frame(root)
     frame_graph.pack(fill="both", expand=True)
 
+    ttk.Button(
+        root,
+        text="Executar Experimento",
+        command=lambda: run_experiment(
+            entries,
+            frame_graph,
+            label_timer,
+            label_progress,
+            label_eta,
+            progress_bar
+        )
+    ).pack(pady=10)
+
     return root
 
+def start_timer(label, start_time, running_flag):
 
-def draw_graph2(frame, data):
+    def update():
+
+        if not running_flag["running"]:
+            return
+
+        elapsed = time.perf_counter() - start_time
+
+        label.config(text=f"Tempo de execução: {elapsed:.2f} s")
+
+        label.after(100, update)
+
+    update()
+
+def draw_graph(frame, data):
 
     from collections import defaultdict
     import matplotlib.ticker as ticker
@@ -146,7 +167,7 @@ def draw_graph2(frame, data):
     avg_times = []
     avg_sat = []
 
-    for M in sorted(groups.keys()):
+    for M in sorted(groups):
 
         values = groups[M]
 
@@ -154,7 +175,7 @@ def draw_graph2(frame, data):
         avg_s = sum(v[1] for v in values) / len(values)
 
         M_values.append(M)
-        avg_times.append(avg_time * 1000)   # escala visual do tempo
+        avg_times.append(avg_time * 1000)
         avg_sat.append(avg_s * 100)
 
     fig, ax = plt.subplots(figsize=(7,4))
@@ -165,25 +186,10 @@ def draw_graph2(frame, data):
     ax.set_xlabel("Número de cláusulas (M)")
     ax.set_ylabel("Porcentagem")
 
-    # -------- eixo X automático --------
-    xmin = min(M_values)
-    xmax = max(M_values)
-    padding_x = (xmax - xmin) * 0.05
-
-    ax.set_xlim(xmin - padding_x, xmax + padding_x)
-
-    # -------- eixo Y automático --------
-    ymax = max(max(avg_times), max(avg_sat))
-    padding_y = ymax * 0.10
-
-    ax.set_ylim(0, ymax + padding_y)
-
-    # -------- formato percentual --------
     ax.yaxis.set_major_formatter(ticker.PercentFormatter())
 
     ax.legend()
 
-    # limpa gráfico anterior
     for widget in frame.winfo_children():
         widget.destroy()
 
