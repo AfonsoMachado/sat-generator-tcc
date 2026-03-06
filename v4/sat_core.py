@@ -51,16 +51,15 @@ O módulo suporta três tipos de experimento:
 Os experimentos são executados em paralelo utilizando ProcessPoolExecutor.
 """
 
+import os
 import random
 import time
-import os
+from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
 from dataclasses import dataclass
 from typing import Tuple
 
 from pysat.examples.rc2 import RC2
 from pysat.formula import WCNF
-
-from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
 # ------------------------------------------------------------------
@@ -119,15 +118,7 @@ def solve_instance(args):
     wcnf = WCNF()
     wcnf.extend(cnf, weights=[1] * len(cnf))
 
-    start = time.perf_counter()
-
-    with RC2(wcnf) as rc2:
-        rc2.compute()
-        cost = rc2.cost
-
-    elapsed = time.perf_counter() - start
-
-    satisf = (M - cost) / M if M else 0
+    elapsed, satisf = run_rc2(wcnf, M)
 
     return M, elapsed, satisf
 
@@ -142,28 +133,17 @@ def solve_instance_partial_maxsat(args):
 
     cnf = generate_random_cnf(N, M, k)
 
-    wcnf = WCNF()
-
     split = M >> 1
 
-    hard = cnf[:split]
-    soft = cnf[split:]
+    wcnf = WCNF()
 
-    for clause in hard:
+    for clause in cnf[:split]:
         wcnf.append(clause)
 
-    for clause in soft:
+    for clause in cnf[split:]:
         wcnf.append(clause, weight=1)
 
-    start = time.perf_counter()
-
-    with RC2(wcnf) as rc2:
-        rc2.compute()
-        cost = rc2.cost
-
-    elapsed = time.perf_counter() - start
-
-    satisf = (M - cost) / M if M else 0
+    elapsed, satisf = run_rc2(wcnf, M)
 
     return M, elapsed, satisf
 
@@ -178,18 +158,24 @@ def solve_instance_weighted_partial_maxsat(args):
 
     cnf = generate_random_cnf(N, M, k)
 
-    wcnf = WCNF()
-
     split = M >> 1
 
-    hard = cnf[:split]
-    soft = cnf[split:]
+    wcnf = WCNF()
 
-    for clause in hard:
+    for clause in cnf[:split]:
         wcnf.append(clause)
 
-    for clause in soft:
+    for clause in cnf[split:]:
         wcnf.append(clause, weight=random.randint(1, 10))
+
+    elapsed, satisf = run_rc2(wcnf, M)
+
+    return M, elapsed,
+
+# ------------------------------------------------------------------
+# Run solver RC2 and return elapsed time and satisfaction ratio
+# ------------------------------------------------------------------
+def run_rc2(wcnf, M):
 
     start = time.perf_counter()
 
@@ -201,8 +187,7 @@ def solve_instance_weighted_partial_maxsat(args):
 
     satisf = (M - cost) / M if M else 0
 
-    return M, elapsed, satisf
-
+    return elapsed, satisf
 
 # ------------------------------------------------------------------
 # Execução do experimento
@@ -215,16 +200,6 @@ def generate_formulas_set(
     solver_type="Max-SAT",
     should_stop=None
 ):
-    """
-    Executa o experimento SAT completo.
-
-    Fluxo:
-
-    1) Gera todas as instâncias do experimento
-    2) Distribui cada instância para um processo
-    3) Executa o solver selecionado
-    4) Coleta métricas de tempo e satisfatibilidade
-    """
 
     if config.seed is not None:
         random.seed(config.seed)
@@ -240,6 +215,7 @@ def generate_formulas_set(
         for _ in range(config.num_formulas)
     ]
 
+    # selecionar solver
     if solver_type == "Max-SAT":
         solver = solve_instance
     elif solver_type == "Partial Max-SAT":
@@ -255,21 +231,47 @@ def generate_formulas_set(
 
     with ProcessPoolExecutor(max_workers=cpu) as executor:
 
-        futures = [executor.submit(solver, inst) for inst in instances]
+        futures = set()
+        instance_iter = iter(instances)
 
-        for i, future in enumerate(as_completed(futures), 1):
-
-            if should_stop and should_stop():
-                executor.shutdown(wait=False, cancel_futures=True)
+        # envia primeiras tarefas
+        for _ in range(cpu):
+            try:
+                inst = next(instance_iter)
+                futures.add(executor.submit(solver, inst))
+            except StopIteration:
                 break
 
-            result = future.result()
-            results.append(result)
+        done_count = 0
+        total = len(instances)
 
-            if result_callback:
-                result_callback(result)
+        while futures:
 
-            if progress_callback:
-                progress_callback(i, len(instances))
+            # verifica stop
+            if should_stop and should_stop():
+                executor.shutdown(wait=False, cancel_futures=True)
+                return results
+
+            done, futures = wait(futures, return_when=FIRST_COMPLETED)
+
+            for future in done:
+
+                result = future.result()
+                results.append(result)
+
+                done_count += 1
+
+                if result_callback:
+                    result_callback(result)
+
+                if progress_callback:
+                    progress_callback(done_count, total)
+
+                # envia nova tarefa
+                try:
+                    inst = next(instance_iter)
+                    futures.add(executor.submit(solver, inst))
+                except StopIteration:
+                    pass
 
     return results
