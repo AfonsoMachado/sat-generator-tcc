@@ -5,11 +5,16 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from sat_core import SATConfig, generate_formulas_set
+import threading
+import time
 
 
-def run_experiment(entries, frame_graph):
+def run_experiment(entries, frame_graph, label_timer):
 
-    try:
+    start_timer(label_timer)
+
+    def worker():
+
         num_formulas = int(entries["formulas"].get())
         num_vars = int(entries["vars"].get())
         k = int(entries["k"].get())
@@ -27,12 +32,20 @@ def run_experiment(entries, frame_graph):
 
         data = generate_formulas_set(config)
 
-        # draw_graph(frame_graph, data)
-        draw_graph2(frame_graph, data)
+        frame_graph.after(0, lambda: draw_graph2(frame_graph, data))
 
-    except Exception as e:
-        messagebox.showerror("Erro", str(e))
+    threading.Thread(target=worker, daemon=True).start()
 
+def start_timer(label):
+
+    start = time.perf_counter()
+
+    def update():
+        elapsed = time.perf_counter() - start
+        label.config(text=f"Tempo de execução: {elapsed:.2f} s")
+        label.after(100, update)
+
+    update()
 
 def draw_graph(frame, data):
 
@@ -107,8 +120,11 @@ def gui_runner():
     ttk.Button(
         root,
         text="Executar Experimento",
-        command=lambda: run_experiment(entries, frame_graph)
+        command=lambda: run_experiment(entries, frame_graph, label_timer)
     ).pack(pady=10)
+
+    label_timer = ttk.Label(root, text="Tempo de execução: 0.00 s")
+    label_timer.pack()
 
     frame_graph = ttk.Frame(root)
     frame_graph.pack(fill="both", expand=True)

@@ -42,6 +42,7 @@ def solve_with_rc2(cnf):
     Resolve a fórmula usando RC2 (Max-SAT puro).
     """
     wcnf = WCNF()
+    wcnf.extend(cnf, weights=[1] * len(cnf))
 
     for clause in cnf:
         wcnf.append(clause, weight=1)
@@ -54,32 +55,30 @@ def solve_with_rc2(cnf):
 
 
 def generate_formulas_set(config: SATConfig):
-    """
-    Executa o experimento e retorna dados para o gráfico.
-
-    Retorna:
-        List[(M, tempo, satisfiabilidade)]
-    """
 
     if config.seed is not None:
         random.seed(config.seed)
 
     experiment_data = []
 
-    for _ in range(config.num_formulas):
+    N = config.num_global_variables
+    k = config.k_literals_per_clause
 
-        M = random.randint(*config.clauses_range)
-        N = config.num_global_variables
-        k = config.k_literals_per_clause
+    min_M, max_M = config.clauses_range
 
-        cnf = generate_random_cnf(N, M, k)
+    for M in range(min_M, max_M + 1):
+        print(f"M = {M}")
 
-        start = time.perf_counter()
-        cost = solve_with_rc2(cnf)
-        elapsed = time.perf_counter() - start
+        for _ in range(config.num_formulas):
 
-        satisf = (M - cost) / M if M else 0
+            cnf = generate_random_cnf(N, M, k)
 
-        experiment_data.append((M, elapsed, satisf))
+            start = time.perf_counter()
+            cost = solve_with_rc2(cnf)
+            elapsed = time.perf_counter() - start
+
+            satisf = (M - cost) / M if M else 0
+
+            experiment_data.append((M, elapsed, satisf))
 
     return experiment_data
