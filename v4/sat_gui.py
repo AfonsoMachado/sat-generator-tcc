@@ -8,6 +8,8 @@ from sat_core import SATConfig, generate_formulas_set
 import threading
 import time
 
+from v4.solver_type import SolverType
+
 stop_flag = {"stop": False}
 running_flag = {"running": False}
 
@@ -151,17 +153,13 @@ def gui_runner():
 
     ttk.Label(frame_inputs, text="Tipo de solver").grid(row=len(labels), column=0, sticky="w")
 
-    solver_var = tk.StringVar(value="Max-SAT")
+    solver_var = tk.StringVar(value=SolverType.MAXSAT.value)
 
     solver_selector = ttk.Combobox(
         frame_inputs,
         textvariable=solver_var,
         state="readonly",
-        values=[
-            "Max-SAT",
-            "Partial Max-SAT",
-            "Weighted Partial Max-SAT"
-        ]
+        values=[solver.value for solver in SolverType]
     )
 
     solver_selector.grid(row=len(labels), column=1)

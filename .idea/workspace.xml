@@ -4,8 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ba717fca-6df9-4a11-ac0a-e62ad18c5829" name="Changes" comment="Initialize timer on first instance completion in SAT experiment GUI">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="ba717fca-6df9-4a11-ac0a-e62ad18c5829" name="Changes" comment="Refactor SAT solver execution to streamline instance processing and improve performance">
+      <change afterPath="$PROJECT_DIR$/v4/solver_type.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v4/sat_core.py" beforeDir="false" afterPath="$PROJECT_DIR$/v4/sat_core.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -236,7 +236,7 @@
       <workItem from="1772742979349" duration="326000" />
       <workItem from="1772743334506" duration="2064000" />
       <workItem from="1772746050413" duration="7528000" />
-      <workItem from="1772824162328" duration="2844000" />
+      <workItem from="1772824162328" duration="3144000" />
     </task>
     <task id="LOCAL-00001" summary="Adiciona conversão de fórmulas para CNF numérica e formatação para PySAT no gerador de fórmulas">
       <option name="closed" value="true" />
@@ -350,7 +350,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772825951339</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="Refactor SAT solver execution to streamline instance processing and improve performance">
+      <option name="closed" value="true" />
+      <created>1772827644622</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1772827644622</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -370,7 +378,8 @@
     <MESSAGE value="Add stop functionality and result collection to SAT experiment execution" />
     <MESSAGE value="Add run button state management to experiment execution in GUI" />
     <MESSAGE value="Initialize timer on first instance completion in SAT experiment GUI" />
-    <option name="LAST_COMMIT_MESSAGE" value="Initialize timer on first instance completion in SAT experiment GUI" />
+    <MESSAGE value="Refactor SAT solver execution to streamline instance processing and improve performance" />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactor SAT solver execution to streamline instance processing and improve performance" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$pytest_for_v3_tests_test_generate_clause_respects_k.coverage" NAME="pytest for v3.tests.test_generate_clause_respects_k Coverage Results" MODIFIED="1772743007286" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

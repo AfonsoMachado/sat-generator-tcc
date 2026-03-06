@@ -61,6 +61,8 @@ from typing import Tuple
 from pysat.examples.rc2 import RC2
 from pysat.formula import WCNF
 
+from solver_type import SolverType
+
 
 # ------------------------------------------------------------------
 # Configuração do experimento
@@ -216,11 +218,11 @@ def generate_formulas_set(
     ]
 
     # selecionar solver
-    if solver_type == "Max-SAT":
+    if solver_type == SolverType.MAXSAT:
         solver = solve_instance
-    elif solver_type == "Partial Max-SAT":
+    elif solver_type == SolverType.PARTIAL_MAXSAT:
         solver = solve_instance_partial_maxsat
-    elif solver_type == "Weighted Partial Max-SAT":
+    elif solver_type == SolverType.WEIGHTED_PARTIAL_MAXSAT:
         solver = solve_instance_weighted_partial_maxsat
     else:
         solver = solve_instance
