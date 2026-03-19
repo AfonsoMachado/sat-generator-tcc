@@ -116,7 +116,9 @@ def generate_random_cnf(num_vars: int, num_clauses: int, k: int):
 # ------------------------------------------------------------------
 
 def solve_instance(args):
-    N, M, k = args
+    N, M, k, seed = args
+
+    random.seed(seed)
     cnf = generate_random_cnf(N, M, k)
 
     wcnf = WCNF()
@@ -133,7 +135,9 @@ def solve_instance(args):
 # ------------------------------------------------------------------
 
 def solve_instance_partial_maxsat(args):
-    N, M, k = args
+    N, M, k, seed = args
+
+    random.seed(seed)
     cnf = generate_random_cnf(N, M, k)
     split = M >> 1
 
@@ -156,7 +160,9 @@ def solve_instance_partial_maxsat(args):
 # ------------------------------------------------------------------
 
 def solve_instance_weighted_partial_maxsat(args):
-    N, M, k = args
+    N, M, k, seed = args
+
+    random.seed(seed)
     cnf = generate_random_cnf(N, M, k)
     split = M >> 1
 
@@ -201,9 +207,7 @@ def generate_formulas_set(
     solver_type=SolverType.MAXSAT,
     should_stop=None
 ):
-
-    if config.seed is not None:
-        random.seed(config.seed)
+    base_seed = config.seed if config.seed is not None else random.randint(0, 10 ** 9)
 
     N = config.num_global_variables
     k = config.k_literals_per_clause
@@ -211,9 +215,11 @@ def generate_formulas_set(
     min_M, max_M = config.clauses_range
 
     instances = [
-        (N, M, k)
-        for M in range(min_M, max_M + 1)
-        for _ in range(config.num_formulas)
+        (N, M, k, base_seed + idx)
+        for idx, M in enumerate(
+            M for M in range(min_M, max_M + 1)
+            for _ in range(config.num_formulas)
+        )
     ]
 
     # selecionar solver
