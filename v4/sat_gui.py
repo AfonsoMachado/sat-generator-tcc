@@ -13,10 +13,11 @@ from v4.solver_type import SolverType
 stop_flag = {"stop": False}
 running_flag = {"running": False}
 
-def run_experiment(entries, frame_graph, label_timer, label_progress, progress_bar, solver_var, run_button):
+def run_experiment(entries, frame_graph, label_timer, label_progress, progress_bar, solver_var, run_button, loading_label, loading_spinner):
     running_flag["running"] = True
     stop_flag["stop"] = False
     run_button.config(state="disabled")
+    frame_graph.after(0, lambda: show_loading(label_timer, label_progress, loading_spinner))
 
     reset_ui(frame_graph, label_timer, label_progress, progress_bar)
 
@@ -54,6 +55,7 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
                 # inicia o timer apenas quando a primeira instância terminar
                 if start_time["value"] is None:
                     start_time["value"] = time.perf_counter()
+                    frame_graph.after(0, lambda: hide_loading(loading_spinner))
                     frame_graph.after(0, lambda: start_timer(label_timer, start_time["value"], running_flag))
 
                 elapsed = time.perf_counter() - start_time["value"]
@@ -122,6 +124,18 @@ def update_ui(done, total, elapsed, label_timer, label_progress, progress_bar):
 
     progress_bar["value"] = done / total * 100
 
+def show_loading(label_timer, label_progress, spinner):
+
+    label_timer.config(text="Iniciando solver...")
+    label_progress.config(text="")
+
+    spinner.pack(pady=5)
+    spinner.start(10)
+
+def hide_loading(spinner):
+
+    spinner.stop()
+    spinner.pack_forget()
 
 def gui_runner():
 
@@ -164,6 +178,17 @@ def gui_runner():
 
     solver_selector.grid(row=len(labels), column=1)
 
+    loading_frame = ttk.Frame(root)
+    loading_frame.pack()
+
+    loading_label = ttk.Label(loading_frame, text="")
+
+    loading_spinner = ttk.Progressbar(
+        loading_frame,
+        mode="indeterminate",
+        length=120
+    )
+
     label_timer = ttk.Label(root, text="Tempo de execução: 0.00 s")
     label_timer.pack()
 
@@ -173,8 +198,32 @@ def gui_runner():
     progress_bar = ttk.Progressbar(root, length=400)
     progress_bar.pack(pady=5)
 
-    frame_graph = ttk.Frame(root)
-    frame_graph.pack(fill="both", expand=True)
+    graph_container = ttk.Frame(root)
+    graph_container.pack(fill="both", expand=True)
+
+    canvas = tk.Canvas(graph_container)
+    scrollbar = ttk.Scrollbar(graph_container, orient="vertical", command=canvas.yview)
+
+    frame_graph = ttk.Frame(canvas)
+
+    frame_graph.bind(
+        "<Configure>",
+        lambda e: canvas.configure(
+            scrollregion=canvas.bbox("all")
+        )
+    )
+
+    canvas.create_window((0, 0), window=frame_graph, anchor="nw")
+
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    canvas.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
+
+    canvas.bind_all(
+        "<MouseWheel>",
+        lambda event: canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+    )
 
     button_frame = ttk.Frame(root)
     button_frame.pack(pady=10)
@@ -194,7 +243,9 @@ def gui_runner():
             label_progress,
             progress_bar,
             solver_var,
-            run_button
+            run_button,
+            loading_label,
+            loading_spinner,
         )
     )
 
@@ -246,67 +297,104 @@ def draw_graph(frame, data):
         avg_times.append(avg_time)
         avg_sat.append(avg_s * 100)
 
-    fig, ax1 = plt.subplots(figsize=(7,4))
+    # limpar gráficos antigos
+    for widget in frame.winfo_children():
+        widget.destroy()
 
-    # -------------------------------
-    # Eixo esquerdo (satisfazibilidade)
-    # -------------------------------
+    # ==================================================
+    # GRÁFICO 1 — COMBINADO (tempo + satisfazibilidade)
+    # ==================================================
+
+    fig1, ax1 = plt.subplots(figsize=(7,4))
 
     ax1.set_xlabel("Número de cláusulas (M)")
     ax1.set_ylabel("Satisfazibilidade (%)", color="blue")
 
     ax1.plot(m_values, avg_sat, color="blue", label="Satisfazibilidade")
-
     ax1.tick_params(axis="y", labelcolor="blue")
-
     ax1.yaxis.set_major_formatter(ticker.PercentFormatter())
-
-    # -------------------------------
-    # Eixo direito (tempo)
-    # -------------------------------
 
     ax2 = ax1.twinx()
 
     ax2.set_ylabel("Tempo médio (s)", color="orange")
-
     ax2.plot(m_values, avg_times, color="orange", label="Tempo")
-
     ax2.tick_params(axis="y", labelcolor="orange")
-
-    # -------------------------------
-    # Ajuste automático eixo X
-    # -------------------------------
 
     xmin = min(m_values)
     xmax = max(m_values)
-
     padding_x = (xmax - xmin) * 0.05
 
     ax1.set_xlim(xmin - padding_x, xmax + padding_x)
 
-    # -------------------------------
-    # legenda no topo
-    # -------------------------------
-
     lines = ax1.get_lines() + ax2.get_lines()
     labels = [l.get_label() for l in lines]
 
-    fig.legend(
-        lines,
-        labels,
-        loc="upper center",
-        ncol=2
+    fig1.legend(lines, labels, loc="upper center", ncol=2)
+    fig1.tight_layout(rect=[0,0,1,0.9])
+
+    canvas1 = FigureCanvasTkAgg(fig1, master=frame)
+    canvas1.draw()
+    canvas1.get_tk_widget().pack(fill="both", expand=True, pady=10)
+
+    # ==================================================
+    # GRÁFICO 2 — APENAS SATISFAZIBILIDADE
+    # ==================================================
+
+    fig2, ax = plt.subplots(figsize=(7, 4))
+
+    ax.set_title("Satisfazibilidade")
+    ax.set_xlabel("Número de cláusulas (M)")
+    ax.set_ylabel("Satisfazibilidade (%)", color="blue")
+
+    ax.plot(
+        m_values,
+        avg_sat,
+        color="blue",
+        marker="o",
+        markersize=3,
+        label="Satisfazibilidade"
     )
 
-    fig.tight_layout(rect=[0, 0, 1, 0.9])
+    ax.tick_params(axis="y", labelcolor="blue")
+    ax.yaxis.set_major_formatter(ticker.PercentFormatter())
 
-    # -------------------------------
-    # limpar gráfico anterior
-    # -------------------------------
+    ax.set_xlim(xmin - padding_x, xmax + padding_x)
 
-    for widget in frame.winfo_children():
-        widget.destroy()
+    ax.legend()
 
-    canvas = FigureCanvasTkAgg(fig, master=frame)
-    canvas.draw()
-    canvas.get_tk_widget().pack(fill="both", expand=True)
+    fig2.tight_layout()
+
+    canvas2 = FigureCanvasTkAgg(fig2, master=frame)
+    canvas2.draw()
+    canvas2.get_tk_widget().pack(fill="both", expand=True, pady=10)
+
+    # ==================================================
+    # GRÁFICO 3 — APENAS TEMPO
+    # ==================================================
+
+    fig3, ax = plt.subplots(figsize=(7, 4))
+
+    ax.set_title("Tempo de resolução")
+    ax.set_xlabel("Número de cláusulas (M)")
+    ax.set_ylabel("Tempo médio (s)", color="orange")
+
+    ax.plot(
+        m_values,
+        avg_times,
+        color="orange",
+        marker="o",
+        markersize=3,
+        label="Tempo médio"
+    )
+
+    ax.tick_params(axis="y", labelcolor="orange")
+
+    ax.set_xlim(xmin - padding_x, xmax + padding_x)
+
+    ax.legend()
+
+    fig3.tight_layout()
+
+    canvas3 = FigureCanvasTkAgg(fig3, master=frame)
+    canvas3.draw()
+    canvas3.get_tk_widget().pack(fill="both", expand=True, pady=10)
