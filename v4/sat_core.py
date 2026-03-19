@@ -92,15 +92,19 @@ def generate_random_cnf(num_vars: int, num_clauses: int, k: int):
     A implementação segue os requisitos do algoritmo descrito no texto.
     """
 
+    # Verificação de parâmetros
+    if k > num_vars:
+        raise ValueError("k não pode ser maior que o número de variáveis distintas")
+
     cnf = []
 
     for _ in range(num_clauses):
 
-        # vetor de candidatos reconstruído a cada cláusula
-        candidates = list(range(-num_vars, 0)) + list(range(1, num_vars + 1))
+        # escolhe variáveis sem repetição
+        variables = random.sample(range(1, num_vars + 1), k)
 
-        # seleção sem repetição
-        clause = random.sample(candidates, k)
+        # atribui sinal aleatório
+        clause = [v if random.choice([True, False]) else -v for v in variables]
 
         cnf.append(clause)
 
@@ -112,15 +116,14 @@ def generate_random_cnf(num_vars: int, num_clauses: int, k: int):
 # ------------------------------------------------------------------
 
 def solve_instance(args):
-
     N, M, k = args
-
     cnf = generate_random_cnf(N, M, k)
 
     wcnf = WCNF()
     wcnf.extend(cnf, weights=[1] * len(cnf))
 
-    elapsed, satisf = run_rc2(wcnf, M)
+    total_soft_weight = len(cnf)
+    elapsed, satisf = run_rc2(wcnf, total_soft_weight)
 
     return M, elapsed, satisf
 
@@ -130,22 +133,20 @@ def solve_instance(args):
 # ------------------------------------------------------------------
 
 def solve_instance_partial_maxsat(args):
-
     N, M, k = args
-
     cnf = generate_random_cnf(N, M, k)
-
     split = M >> 1
 
     wcnf = WCNF()
 
     for clause in cnf[:split]:
-        wcnf.append(clause)
+        wcnf.append(clause)  # hard
 
     for clause in cnf[split:]:
-        wcnf.append(clause, weight=1)
+        wcnf.append(clause, weight=1)  # soft
 
-    elapsed, satisf = run_rc2(wcnf, M)
+    total_soft_weight = len(cnf[split:])
+    elapsed, satisf = run_rc2(wcnf, total_soft_weight)
 
     return M, elapsed, satisf
 
@@ -155,30 +156,29 @@ def solve_instance_partial_maxsat(args):
 # ------------------------------------------------------------------
 
 def solve_instance_weighted_partial_maxsat(args):
-
     N, M, k = args
-
     cnf = generate_random_cnf(N, M, k)
-
     split = M >> 1
 
     wcnf = WCNF()
+    total_soft_weight = 0
 
     for clause in cnf[:split]:
-        wcnf.append(clause)
+        wcnf.append(clause)  # hard
 
     for clause in cnf[split:]:
-        wcnf.append(clause, weight=random.randint(1, 10))
+        weight = random.randint(1, 10)
+        total_soft_weight += weight
+        wcnf.append(clause, weight=weight)
 
-    elapsed, satisf = run_rc2(wcnf, M)
+    elapsed, satisf = run_rc2(wcnf, total_soft_weight)
 
-    return M, elapsed,
+    return M, elapsed, satisf
 
 # ------------------------------------------------------------------
 # Run solver RC2 and return elapsed time and satisfaction ratio
 # ------------------------------------------------------------------
-def run_rc2(wcnf, M):
-
+def run_rc2(wcnf, total_soft_weight):
     start = time.perf_counter()
 
     with RC2(wcnf) as rc2:
@@ -186,8 +186,7 @@ def run_rc2(wcnf, M):
         cost = rc2.cost
 
     elapsed = time.perf_counter() - start
-
-    satisf = (M - cost) / M if M else 0
+    satisf = (total_soft_weight - cost) / total_soft_weight if total_soft_weight else 0
 
     return elapsed, satisf
 
@@ -199,7 +198,7 @@ def generate_formulas_set(
     config: SATConfig,
     progress_callback=None,
     result_callback=None,
-    solver_type="Max-SAT",
+    solver_type=SolverType.MAXSAT,
     should_stop=None
 ):
 
@@ -230,14 +229,15 @@ def generate_formulas_set(
     results = []
 
     cpu = os.cpu_count()
+    max_workers = max(1, int(cpu * 0.7))
 
-    with ProcessPoolExecutor(max_workers=cpu) as executor:
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
         futures = set()
         instance_iter = iter(instances)
 
         # envia primeiras tarefas
-        for _ in range(cpu):
+        for _ in range(max_workers):
             try:
                 inst = next(instance_iter)
                 futures.add(executor.submit(solver, inst))
