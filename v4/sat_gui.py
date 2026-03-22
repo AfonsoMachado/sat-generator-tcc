@@ -2,11 +2,17 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from tkinter import filedialog
+import csv
 
 from sat_core import SATConfig, generate_formulas_set
 
 import threading
 import time
+import os
+
+output_dir = "resultados"
+os.makedirs(output_dir, exist_ok=True)
 
 from v4.solver_type import SolverType
 
@@ -24,11 +30,7 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
     partial_results = []
     start_time = {"value": None}
 
-    def collect_result(res):
-        partial_results.append(res)
-
     def worker():
-
         try:
 
             num_formulas = int(entries["formulas"].get())
@@ -38,6 +40,22 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
             max_clauses = int(entries["max_clauses"].get())
             seed = int(entries["seed"].get()) if entries["seed"].get() else None
             solver_type = solver_var.get()
+
+            import time
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            filename = f"{timestamp}_{solver_type}_N{num_vars}_k{k}_f{num_formulas}_M{min_clauses}-{max_clauses}_seed{seed or 'rand'}.csv"
+            filepath = os.path.join(output_dir, filename)
+            file = open(filepath, "w", newline="")
+            writer = csv.writer(file)
+            writer.writerow(["solver", "M", "tempo", "satisf"])
+
+            def collect_result(res):
+                partial_results.append(res)
+
+                M, elapsed, satisf = res
+
+                writer.writerow([solver_type, M, elapsed, satisf])
+                file.flush()
 
             config = SATConfig(
                 num_formulas=num_formulas,
@@ -79,6 +97,7 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
                 should_stop=should_stop
             )
 
+            file.close()
             running_flag["running"] = False
 
             if partial_results:
@@ -227,6 +246,12 @@ def gui_runner():
 
     button_frame = ttk.Frame(root)
     button_frame.pack(pady=10)
+
+    ttk.Button(
+        button_frame,
+        text="Carregar dados",
+        command=lambda: load_data_and_plot(frame_graph)
+    ).pack(side="left", padx=5)
 
     run_button = ttk.Button(
         button_frame,
@@ -398,3 +423,37 @@ def draw_graph(frame, data):
     canvas3 = FigureCanvasTkAgg(fig3, master=frame)
     canvas3.draw()
     canvas3.get_tk_widget().pack(fill="both", expand=True, pady=10)
+
+def load_data_and_plot(frame_graph):
+    filepath = filedialog.askopenfilename(
+        title="Selecionar arquivo de resultados",
+        filetypes=[("Arquivos CSV", "*.csv")]
+    )
+
+    if not filepath:
+        return
+
+    data = []
+
+    try:
+        with open(filepath, "r") as f:
+            reader = csv.reader(f)
+            next(reader)  # pula header
+
+            for row in reader:
+                if len(row) != 4:
+                    continue
+
+                _, M, elapsed, satisf = row
+
+                data.append((
+                    int(M),
+                    float(elapsed),
+                    float(satisf)
+                ))
+
+        if data:
+            draw_graph(frame_graph, data)
+
+    except Exception as e:
+        messagebox.showerror("Erro", f"Falha ao carregar arquivo:\n{e}")

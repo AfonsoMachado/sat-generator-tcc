@@ -4,8 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ba717fca-6df9-4a11-ac0a-e62ad18c5829" name="Changes" comment="Validate parameters and optimize CNF generation in SAT solver">
+    <list default="true" id="ba717fca-6df9-4a11-ac0a-e62ad18c5829" name="Changes" comment="Add seed parameter to SAT solver instance functions for reproducibility">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v4/sat_gui.py" beforeDir="false" afterPath="$PROJECT_DIR$/v4/sat_gui.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -242,7 +244,9 @@
       <workItem from="1773062944929" duration="7064000" />
       <workItem from="1773088447339" duration="3668000" />
       <workItem from="1773884100591" duration="3869000" />
-      <workItem from="1773934481624" duration="311000" />
+      <workItem from="1773934481624" duration="3070000" />
+      <workItem from="1774028696371" duration="2684000" />
+      <workItem from="1774042967341" duration="7277000" />
     </task>
     <task id="LOCAL-00001" summary="Adiciona conversão de fórmulas para CNF numérica e formatação para PySAT no gerador de fórmulas">
       <option name="closed" value="true" />
@@ -388,7 +392,15 @@
       <option name="project" value="LOCAL" />
       <updated>1773930129277</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="Add seed parameter to SAT solver instance functions for reproducibility">
+      <option name="closed" value="true" />
+      <created>1773935074331</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1773935074331</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -411,13 +423,14 @@
     <MESSAGE value="Refactor SAT solver execution to streamline instance processing and improve performance" />
     <MESSAGE value="Enhance SAT experiment GUI with loading indicators and improved layout management" />
     <MESSAGE value="Validate parameters and optimize CNF generation in SAT solver" />
-    <option name="LAST_COMMIT_MESSAGE" value="Validate parameters and optimize CNF generation in SAT solver" />
+    <MESSAGE value="Add seed parameter to SAT solver instance functions for reproducibility" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add seed parameter to SAT solver instance functions for reproducibility" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$pytest_for_v3_tests_test_generate_clause_respects_k.coverage" NAME="pytest for v3.tests.test_generate_clause_respects_k Coverage Results" MODIFIED="1772743007286" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$pytest_for_v3_tests_test_generate_variable_names.coverage" NAME="pytest for v3.tests.test_generate_variable_names Coverage Results" MODIFIED="1772742990942" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$generator_with_gui.coverage" NAME="generator_with_gui Coverage Results" MODIFIED="1772751846154" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/v0" />
-    <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$main__1_.coverage" NAME="main (1) Coverage Results" MODIFIED="1773934493205" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/v4" />
+    <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$main__1_.coverage" NAME="main (1) Coverage Results" MODIFIED="1774199447942" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/v4" />
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$generator.coverage" NAME="generator Coverage Results" MODIFIED="1772811111824" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/v1" />
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$main.coverage" NAME="main Coverage Results" MODIFIED="1772822099157" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/v3" />
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$teste.coverage" NAME="teste Coverage Results" MODIFIED="1772744512242" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/RC2" />
