@@ -13,7 +13,7 @@ import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from sat_core import SATConfig, generate_formulas_set
-from v4.solver_type import SolverType
+from solver_type import SolverType
 
 output_dir = "resultados"
 os.makedirs(output_dir, exist_ok=True)
