@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ba717fca-6df9-4a11-ac0a-e62ad18c5829" name="Changes" comment="Update .gitignore and refactor SAT GUI for improved data handling and UI responsiveness" />
+    <list default="true" id="ba717fca-6df9-4a11-ac0a-e62ad18c5829" name="Changes" comment="Update workspace configuration for improved task management and data handling" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -251,7 +251,7 @@
       <workItem from="1773934481624" duration="3070000" />
       <workItem from="1774028696371" duration="2684000" />
       <workItem from="1774042967341" duration="12295000" />
-      <workItem from="1774270319896" duration="3587000" />
+      <workItem from="1774270319896" duration="3900000" />
     </task>
     <task id="LOCAL-00001" summary="Adiciona conversão de fórmulas para CNF numérica e formatação para PySAT no gerador de fórmulas">
       <option name="closed" value="true" />
@@ -421,7 +421,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774273896829</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="Update workspace configuration for improved task management and data handling">
+      <option name="closed" value="true" />
+      <created>1774274407485</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1774274407485</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -447,7 +455,8 @@
     <MESSAGE value="Add seed parameter to SAT solver instance functions for reproducibility" />
     <MESSAGE value="Add CSV output functionality and data loading feature to SAT experiment GUI" />
     <MESSAGE value="Update .gitignore and refactor SAT GUI for improved data handling and UI responsiveness" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update .gitignore and refactor SAT GUI for improved data handling and UI responsiveness" />
+    <MESSAGE value="Update workspace configuration for improved task management and data handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update workspace configuration for improved task management and data handling" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Gerador_de_Fórmulas$pytest_for_v3_tests_test_generate_clause_respects_k.coverage" NAME="pytest for v3.tests.test_generate_clause_respects_k Coverage Results" MODIFIED="1772743007286" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
