@@ -1,56 +1,3 @@
-"""
-Gerador e executor de instâncias Max-sat / Partial Max-sat / Weighted Partial Max-sat.
-
-Este módulo implementa:
-
-1) Geração de fórmulas k-SAT aleatórias em forma normal conjuntiva (CNF)
-2) Execução de experimentos utilizando o solver RC2 da biblioteca PySAT
-3) Paralelização do experimento utilizando múltiplos processos
-
----------------------------------------------------------------------
-
-REQUISITOS DO ALGORITMO DE GERAÇÃO (conforme descrição do texto):
-
-O gerador deve garantir:
-
-1. Impedimento da repetição de átomos numa cláusula
-2. Cada cláusula deve possuir exatamente K literais
-3. A cada cláusula deve ser reconstruído um vetor de candidatos
-4. O vetor de candidatos deve conter todos os inteiros entre -N e N (exceto 0)
-5. Um segundo vetor deve representar a cláusula em construção
-6. Quando um literal é sorteado ele não pode ser escolhido novamente
-
-Implementação em Python:
-
-- O vetor de candidatos é reconstruído a cada cláusula
-- Os literais possíveis são [-N..-1, 1..N]
-- A seleção sem repetição é feita utilizando `random.sample`
-- Isso reproduz o comportamento do algoritmo descrito no texto,
-  onde uma "flag" era marcada no vetor de candidatos.
-
----------------------------------------------------------------------
-
-FORMATO DAS FÓRMULAS
-
-As fórmulas são geradas diretamente no formato aceito pelo PySAT:
-
-    [[1, -3, 5], [-2, 4, -6], ...]
-
-Cada sublista representa uma cláusula.
-
----------------------------------------------------------------------
-
-EXPERIMENTOS
-
-O módulo suporta três tipos de experimento:
-
-- Max-sat
-- Partial Max-sat
-- Weighted Partial Max-sat
-
-Os experimentos são executados em paralelo utilizando ProcessPoolExecutor.
-"""
-
 import os
 import random
 from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
@@ -77,13 +24,48 @@ def generate_formulas_set(
         solver_type: SolverType = SolverType.MAXSAT,
         should_stop: ShouldStopCallback | None = None,
 ) -> list[SolverResult]:
+    """
+    Gera e resolve um conjunto de instâncias SAT/Max-SAT de forma paralela.
+
+    Essa função representa o núcleo da execução experimental, sendo responsável por:
+    - Gerar instâncias a partir dos parâmetros definidos em `SATConfig`
+    - Distribuir a execução entre múltiplos processos (paralelismo)
+    - Coletar resultados incrementalmente
+    - Atualizar a interface via callbacks (progresso e resultados)
+    - Permitir interrupção controlada da execução
+
+    Fluxo geral:
+    1. Geração das instâncias (combinação de M e amostras)
+    2. Seleção do solver conforme o tipo (MaxSAT / Partial / Weighted)
+    3. Execução paralela via `ProcessPoolExecutor`
+    4. Coleta incremental dos resultados conforme finalização das tarefas
+    5. Atualização de progresso e retorno final consolidado
+
+    Parâmetros:
+    - config: configuração do experimento (N, k, intervalo de M, número de fórmulas, seed)
+    - progress_callback: função opcional chamada a cada instância concluída (done, total)
+    - result_callback: função opcional chamada a cada resultado individual
+    - solver_type: define qual abordagem de resolução será utilizada
+    - should_stop: função opcional para interrupção antecipada da execução
+
+    Retorno:
+    - Lista de resultados (`SolverResult`) contendo (M, tempo, satisfazibilidade)
+
+    Observações importantes:
+    - A execução utiliza paralelismo baseado em CPU (~70% dos núcleos disponíveis)
+    - Seeds são derivadas de uma seed base para garantir diversidade estatística
+    - O processamento é incremental (streaming de resultados), evitando bloqueios longos
+    """
+
+    # Define seed base (fixa para reprodutibilidade ou aleatória para diversidade)
     base_seed = config.seed if config.seed is not None else random.randint(0, 10 ** 9)
 
     N = config.num_global_variables
     k = config.k_literals_per_clause
-
     min_M, max_M = config.clauses_range
 
+    # Geração das instâncias (cartesiano de M x num_formulas)
+    # Cada instância recebe uma seed única derivada da base
     instances = [
         (N, M, k, base_seed + idx)
         for idx, M in enumerate(
@@ -92,7 +74,7 @@ def generate_formulas_set(
         )
     ]
 
-    # selecionar solver
+    # Seleção dinâmica do solver conforme o tipo escolhido
     if solver_type == SolverType.MAXSAT:
         solver = solve_instance
     elif solver_type == SolverType.PARTIAL_MAXSAT:
@@ -104,6 +86,7 @@ def generate_formulas_set(
 
     results: list[SolverResult] = []
 
+    # Define número de workers (70% da CPU disponível)
     cpu = os.cpu_count()
     max_workers = max(1, int(cpu * 0.7))
 
@@ -112,7 +95,7 @@ def generate_formulas_set(
         futures = set()
         instance_iter = iter(instances)
 
-        # envia primeiras tarefas
+        # Submete as primeiras tarefas para ocupar os workers
         for _ in range(max_workers):
             try:
                 inst = next(instance_iter)
@@ -123,9 +106,10 @@ def generate_formulas_set(
         done_count = 0
         total = len(instances)
 
+        # Loop principal: processa tarefas conforme finalizam
         while futures:
 
-            # verifica stop
+            # Verifica interrupção externa (ex: botão "parar" na UI)
             if should_stop and should_stop():
                 executor.shutdown(wait=False, cancel_futures=True)
                 return results
@@ -134,18 +118,21 @@ def generate_formulas_set(
 
             for future in done:
 
+                # Obtém resultado da instância concluída
                 result = future.result()
                 results.append(result)
 
                 done_count += 1
 
+                # Callback para processamento incremental de resultados
                 if result_callback:
                     result_callback(result)
 
+                # Callback de progresso (ex: atualização de UI)
                 if progress_callback:
                     progress_callback(done_count, total)
 
-                # envia nova tarefa
+                # Submete nova tarefa para manter o pool ocupado
                 try:
                     inst = next(instance_iter)
                     futures.add(executor.submit(solver, inst))

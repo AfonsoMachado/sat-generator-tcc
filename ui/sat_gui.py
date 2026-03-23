@@ -21,7 +21,24 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 
 
 def parse_inputs(entries: dict[str, ttk.Entry], solver_var: tk.StringVar) -> ExperimentInputs:
-    """Lê e valida os campos da interface."""
+    """
+    Lê e valida os parâmetros informados pelo usuário na interface gráfica.
+
+    Essa função extrai os valores dos campos de entrada (Entry widgets),
+    realiza conversões de tipo e constrói um objeto `ExperimentInputs`,
+    que será utilizado na execução do experimento.
+
+    Tratamento especial:
+    - A seed é opcional: caso não informada, será considerada como None,
+      permitindo geração aleatória posterior.
+
+    Parâmetros:
+    - entries: dicionário contendo os campos da interface
+    - solver_var: variável associada ao seletor de tipo de solver
+
+    Retorno:
+    - Objeto `ExperimentInputs` com os parâmetros do experimento
+    """
     seed_raw = entries["seed"].get().strip()
 
     return ExperimentInputs(
@@ -45,7 +62,36 @@ def run_experiment(
         run_button: ttk.Button,
         loading_spinner: ttk.Progressbar,
 ) -> None:
-    """Executa o experimento em thread separada para não travar a UI."""
+    """
+    Executa o experimento em uma thread separada, mantendo a interface responsiva.
+
+    Essa função coordena todo o fluxo de execução do experimento, incluindo:
+    - Leitura dos parâmetros da interface
+    - Inicialização do estado de execução
+    - Persistência incremental dos resultados em CSV
+    - Atualização da interface (tempo, progresso, gráficos)
+    - Suporte a interrupção controlada
+
+    Estratégia de execução:
+    - O processamento ocorre em uma thread paralela (worker)
+    - A interface é atualizada via `frame.after` (thread-safe no Tkinter)
+    - Resultados são armazenados incrementalmente em memória e em disco
+
+    Componentes principais:
+    - `collect_result`: callback para tratamento de cada resultado individual
+    - `progress`: callback de progresso (UI + controle de tempo)
+    - `generate_formulas_set`: motor de execução paralela
+
+    Tratamento de erros:
+    - Interrupção controlada (STOP_REQUESTED)
+    - Exibição de erros via messagebox
+    - Garantia de liberação de recursos (arquivo CSV, spinner, botão)
+
+    Observações:
+    - O botão de execução é desabilitado durante o processamento
+    - O gráfico é atualizado ao final ou em caso de parada antecipada
+    - O spinner é exibido até o início efetivo do processamento
+    """
     execution_state.start()
     run_button.config(state="disabled")
 
@@ -150,7 +196,24 @@ def run_experiment(
 # ============================================================
 
 def load_data_and_plot(frame_graph: ttk.Frame) -> None:
-    """Abre um CSV salvo anteriormente e recria os gráficos."""
+    """
+    Permite carregar resultados previamente salvos e reconstruir os gráficos.
+
+    Essa funcionalidade evita a necessidade de reexecutar experimentos,
+    permitindo análise posterior a partir de arquivos CSV.
+
+    Fluxo:
+    - Abre um seletor de arquivos
+    - Lê os dados via `load_results_from_csv`
+    - Renderiza os gráficos com base nos dados carregados
+
+    Tratamento:
+    - Arquivo vazio ou inválido → aviso ao usuário
+    - Erros de leitura → mensagem de erro
+
+    Parâmetros:
+    - frame_graph: área onde os gráficos serão desenhados
+    """
     filepath = filedialog.askopenfilename(
         title="Selecionar arquivo de resultados",
         filetypes=[("Arquivos CSV", "*.csv")],
@@ -178,7 +241,20 @@ def create_labeled_entry(
         row: int,
         label_text: str,
 ) -> ttk.Entry:
-    """Cria um label com entry associado em uma linha do grid."""
+    """
+    Cria um par label + campo de entrada (Entry) em uma linha do layout.
+
+    Essa função auxilia na construção padronizada da interface,
+    garantindo consistência visual e redução de código repetido.
+
+    Parâmetros:
+    - parent: container onde o componente será inserido
+    - row: posição na grid
+    - label_text: texto descritivo do campo
+
+    Retorno:
+    - Widget Entry criado
+    """
     ttk.Label(parent, text=label_text).grid(row=row, column=0, sticky="w")
     entry = ttk.Entry(parent)
     entry.grid(row=row, column=1)
@@ -186,7 +262,26 @@ def create_labeled_entry(
 
 
 def build_inputs_section(root: tk.Tk) -> tuple[ttk.Frame, dict[str, ttk.Entry], tk.StringVar]:
-    """Monta a seção de parâmetros de entrada."""
+    """
+    Constrói a seção de entrada de parâmetros do experimento.
+
+    Essa área permite ao usuário configurar:
+    - Número de fórmulas
+    - Número de variáveis (N)
+    - Literais por cláusula (k)
+    - Intervalo de cláusulas (M)
+    - Seed opcional
+    - Tipo de solver
+
+    Componentes:
+    - Campos de entrada (Entry)
+    - Combobox para seleção do solver
+
+    Retorno:
+    - Frame da seção
+    - Dicionário de entries
+    - Variável associada ao solver selecionado
+    """
     frame_inputs = ttk.Frame(root, padding=10)
     frame_inputs.pack(fill="x")
 
@@ -219,7 +314,22 @@ def build_inputs_section(root: tk.Tk) -> tuple[ttk.Frame, dict[str, ttk.Entry], 
 
 
 def build_status_section(root: tk.Tk) -> tuple[ttk.Progressbar, ttk.Label, ttk.Label, ttk.Progressbar]:
-    """Monta a seção de status e carregamento."""
+    """
+    Constrói a seção de status da execução.
+
+    Essa área fornece feedback visual ao usuário durante o experimento,
+    incluindo:
+    - Tempo de execução (cronômetro)
+    - Progresso textual (instâncias concluídas)
+    - Barra de progresso percentual
+    - Spinner de carregamento inicial
+
+    Retorno:
+    - Spinner de loading
+    - Label de tempo
+    - Label de progresso
+    - Barra de progresso
+    """
     loading_frame = ttk.Frame(root)
     loading_frame.pack()
 
@@ -245,7 +355,22 @@ def build_status_section(root: tk.Tk) -> tuple[ttk.Progressbar, ttk.Label, ttk.L
 
 
 def build_graph_section(root: tk.Tk) -> ttk.Frame:
-    """Monta a área com scroll onde os gráficos serão renderizados."""
+    """
+    Constrói a área de visualização dos gráficos com suporte a rolagem.
+
+    Estrutura:
+    - Canvas (container principal)
+    - Frame interno (onde os gráficos são renderizados)
+    - Scroll vertical
+
+    Funcionalidades:
+    - Scroll automático conforme crescimento do conteúdo
+    - Suporte a scroll com mouse
+    - Layout expansível
+
+    Retorno:
+    - Frame interno onde os gráficos serão desenhados
+    """
     graph_container = ttk.Frame(root)
     graph_container.pack(fill="both", expand=True)
 
@@ -283,7 +408,18 @@ def build_buttons_section(
         solver_var: tk.StringVar,
         loading_spinner: ttk.Progressbar,
 ) -> None:
-    """Monta a seção de botões de ação."""
+    """
+    Constrói a seção de botões de controle da aplicação.
+
+    Botões disponíveis:
+    - "Carregar dados": abre CSV e renderiza gráficos
+    - "Executar Experimento": inicia execução completa
+    - "Parar": interrompe execução em andamento
+
+    Observações:
+    - O botão de execução é desabilitado durante o processamento
+    - O botão "Parar" utiliza controle via estado global (`execution_state`)
+    """
     button_frame = ttk.Frame(root)
     button_frame.pack(pady=10)
 
@@ -317,7 +453,22 @@ def build_buttons_section(
 
 
 def gui_runner() -> tk.Tk:
-    """Cria e retorna a aplicação Tkinter configurada."""
+    """
+    Inicializa e configura a aplicação gráfica completa.
+
+    Essa função centraliza a montagem de todos os componentes da interface:
+    - Seção de inputs
+    - Seção de status
+    - Área de gráficos
+    - Botões de controle
+
+    Também define:
+    - Título da janela
+    - Estrutura principal da aplicação
+
+    Retorno:
+    - Instância configurada do Tkinter (`Tk`), pronta para execução
+    """
     root = tk.Tk()
     root.title("Experimento Max-SAT RC2")
 

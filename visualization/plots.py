@@ -9,7 +9,27 @@ from ui.components import clear_frame
 
 
 def draw_graphs(frame: ttk.Frame, data: list[ExperimentResult]) -> None:
-    """Limpa o container e desenha todos os gráficos a partir dos resultados."""
+    """
+    Renderiza todos os gráficos a partir dos resultados do experimento.
+
+    Essa função atua como ponto central da visualização, sendo responsável por:
+    - Limpar o container de gráficos anterior
+    - Agregar os resultados (média e desvio padrão)
+    - Gerar múltiplos gráficos complementares
+
+    Gráficos gerados:
+    - Gráfico combinado (tempo + satisfazibilidade)
+    - Gráfico de satisfazibilidade
+    - Gráfico de tempo médio
+    - Gráfico de tempo com desvio padrão
+
+    Parâmetros:
+    - frame: container onde os gráficos serão renderizados
+    - data: lista de resultados individuais do experimento
+
+    Observação:
+    Caso não haja dados, a função não realiza nenhuma ação.
+    """
     if not data:
         return
 
@@ -23,7 +43,24 @@ def draw_graphs(frame: ttk.Frame, data: list[ExperimentResult]) -> None:
 
 
 def create_combined_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> None:
-    """Cria o gráfico combinado de satisfazibilidade e tempo médio."""
+    """
+    Cria um gráfico combinado com dois eixos Y:
+    - Satisfazibilidade (%) no eixo esquerdo
+    - Tempo médio (s) no eixo direito
+
+    Esse gráfico permite analisar simultaneamente:
+    - A transição de fase (queda na satisfazibilidade)
+    - O crescimento do custo computacional (tempo)
+
+    Características:
+    - Dois eixos Y independentes (twinx)
+    - Legenda combinada
+    - Formatação percentual no eixo de satisfazibilidade
+
+    Parâmetros:
+    - frame: container de renderização
+    - stats: estatísticas agregadas por M
+    """
     m_values, avg_times, _, avg_sat, _ = extract_plot_series(stats)
     x_left, x_right = calculate_x_limits(m_values)
 
@@ -51,7 +88,21 @@ def create_combined_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> Non
 
 
 def create_time_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> None:
-    """Cria o gráfico apenas de tempo médio."""
+    """
+    Cria o gráfico de tempo médio de resolução.
+
+    Esse gráfico evidencia o crescimento do custo computacional
+    conforme o número de cláusulas aumenta.
+
+    Características:
+    - Linha com marcadores (melhor visualização dos pontos)
+    - Eixo Y exclusivo para tempo
+    - Limites ajustados automaticamente
+
+    Parâmetros:
+    - frame: container de renderização
+    - stats: estatísticas agregadas
+    """
     m_values, avg_times, _, _, _ = extract_plot_series(stats)
     x_left, x_right = calculate_x_limits(m_values)
 
@@ -78,7 +129,23 @@ def create_time_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> None:
 
 def extract_plot_series(stats: list[AggregatedStats]) -> tuple[
     list[int], list[float], list[float], list[float], list[float]]:
-    """Extrai listas prontas para plotagem a partir das estatísticas agregadas."""
+    """
+    Extrai séries numéricas a partir das estatísticas agregadas.
+
+    Essa função transforma objetos estruturados (`AggregatedStats`)
+    em listas simples, adequadas para uso direto em gráficos.
+
+    Retorna:
+    - m_values: valores de M (número de cláusulas)
+    - avg_times: tempos médios
+    - std_times: desvios padrão do tempo
+    - avg_sat: satisfazibilidade média (%)
+    - std_sat: desvio padrão da satisfazibilidade (%)
+
+    Observação:
+    Essa separação melhora a legibilidade e reutilização do código
+    de plotagem.
+    """
     m_values = [item.M for item in stats]
     avg_times = [item.avg_time for item in stats]
     std_times = [item.std_time for item in stats]
@@ -88,7 +155,22 @@ def extract_plot_series(stats: list[AggregatedStats]) -> tuple[
 
 
 def calculate_x_limits(m_values: list[int]) -> tuple[float, float]:
-    """Calcula os limites do eixo X com padding."""
+    """
+    Calcula os limites do eixo X com margem (padding).
+
+    Essa função evita que os pontos do gráfico fiquem colados
+    nas bordas, melhorando a legibilidade visual.
+
+    Estratégia:
+    - Adiciona 5% de margem em cada lado
+    - Caso haja apenas um valor, aplica padding fixo
+
+    Parâmetros:
+    - m_values: lista de valores de M
+
+    Retorno:
+    - (x_min, x_max): limites ajustados do eixo X
+    """
     x_min = min(m_values)
     x_max = max(m_values)
     padding_x = (x_max - x_min) * 0.05 if x_max > x_min else 1
@@ -96,14 +178,43 @@ def calculate_x_limits(m_values: list[int]) -> tuple[float, float]:
 
 
 def render_plot(frame: ttk.Frame, fig: plt.Figure) -> None:
-    """Renderiza uma figura matplotlib dentro do frame informado."""
+    """
+    Renderiza uma figura matplotlib dentro de um frame Tkinter.
+
+    Essa função faz a ponte entre matplotlib e a interface gráfica,
+    permitindo exibir gráficos dinamicamente na aplicação.
+
+    Fluxo:
+    - Cria um canvas Tkinter para a figura
+    - Desenha o gráfico
+    - Insere no layout com expansão automática
+
+    Parâmetros:
+    - frame: container onde o gráfico será inserido
+    - fig: figura matplotlib a ser renderizada
+    """
     canvas = FigureCanvasTkAgg(fig, master=frame)
     canvas.draw()
     canvas.get_tk_widget().pack(fill="both", expand=True, pady=10)
 
 
 def create_satisfiability_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> None:
-    """Cria o gráfico apenas de satisfazibilidade média."""
+    """
+    Cria o gráfico de satisfazibilidade média.
+
+    Esse gráfico é fundamental para identificar a transição de fase,
+    mostrando a variação da porcentagem de cláusulas satisfeitas
+    conforme o aumento de M.
+
+    Características:
+    - Eixo Y em percentual
+    - Linha com marcadores
+    - Escala adaptativa
+
+    Parâmetros:
+    - frame: container de renderização
+    - stats: estatísticas agregadas
+    """
     m_values, _, _, avg_sat, _ = extract_plot_series(stats)
     x_left, x_right = calculate_x_limits(m_values)
 
@@ -130,7 +241,25 @@ def create_satisfiability_chart(frame: ttk.Frame, stats: list[AggregatedStats]) 
 
 
 def create_time_std_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> None:
-    """Cria o gráfico de tempo médio com desvio padrão."""
+    """
+    Cria o gráfico de tempo médio com desvio padrão.
+
+    Esse gráfico permite analisar não apenas o tempo médio,
+    mas também a variabilidade entre as execuções.
+
+    Interpretação:
+    - Barras de erro maiores indicam maior instabilidade
+    - Regiões próximas à transição de fase tendem a apresentar maior variância
+
+    Características:
+    - Uso de error bars (matplotlib.errorbar)
+    - Exibição de média ± desvio padrão
+    - Destaque visual das incertezas
+
+    Parâmetros:
+    - frame: container de renderização
+    - stats: estatísticas agregadas
+    """
     m_values, avg_times, std_times, _, _ = extract_plot_series(stats)
     x_left, x_right = calculate_x_limits(m_values)
 
