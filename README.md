@@ -339,3 +339,39 @@ O projeto foi desenvolvido com fins acadêmicos, visando:
 ## 📄 Licença
 
 Uso acadêmico e educacional.
+
+## 🧠 Diagrama de Fluxo
+
+```mermaid
+flowchart TD
+    A[Usuário inicia aplicação] --> B[Interface Tkinter]
+    B --> C[Preenche parâmetros]
+    C --> D[Clica em 'Executar']
+    D --> E[run_experiment]
+    E --> F[Inicializa ExecutionState]
+    F --> G[Parse dos inputs]
+    G --> H[Cria CSVResultWriter]
+    H --> I[generate_formulas_set]
+    I --> J[Gerar instâncias N, M, k, seed]
+    J --> K[Selecionar Solver]
+    K --> L{Tipo de Solver}
+    L -->|MaxSAT| M1[solve_instance]
+    L -->|Partial| M2[solve_instance_partial_maxsat]
+    L -->|Weighted| M3[solve_instance_weighted_partial_maxsat]
+    M1 --> N[Executa RC2]
+    M2 --> N
+    M3 --> N
+    N --> O[Calcula tempo e satisf]
+    O --> P[Callback result_callback]
+    P --> Q[Salva no CSV]
+    O --> R[Callback progress_callback]
+    R --> S[Atualiza UI]
+    S --> T{Usuário parou?}
+    T -->|Sim| U[Encerrar execução]
+    T -->|Não| I
+    I --> V[Fim das instâncias]
+    V --> W[Aggregate Results]
+    W --> X[Gerar gráficos]
+    X --> Y[Renderizar no Tkinter]
+    Y --> Z[Exibir resultados]
+```
