@@ -14,8 +14,6 @@ com ênfase em:
 Além disso, o sistema fornece uma **interface gráfica interativa**, permitindo ao usuário configurar experimentos,
 acompanhar a execução em tempo real e visualizar os resultados por meio de gráficos.
 
----
-
 ## 📌 Funcionalidades
 
 O sistema implementa um pipeline completo de experimentação:
@@ -70,8 +68,6 @@ Cada variante possui comportamento distinto em relação às cláusulas (hard/so
 - Carregamento de CSV previamente gerado
 - Replotagem sem reexecução do experimento
 
----
-
 ## 🏗️ Arquitetura do Projeto
 
 O sistema foi estruturado em camadas bem definidas, separando responsabilidades:
@@ -111,8 +107,6 @@ O projeto segue uma separação clara entre:
 
 Isso facilita manutenção, testes e evolução futura.
 
----
-
 ## ⚙️ Requisitos
 
 - Python 3.10+
@@ -123,15 +117,11 @@ Instalação das dependências:
 pip install python-sat matplotlib numpy
 ```
 
----
-
 ## ▶️ Execução da aplicação
 
 ```bash
 python main.py
 ```
-
----
 
 ## 🖥️ Interface da Aplicação
 
@@ -156,8 +146,6 @@ A interface gráfica permite configurar os seguintes parâmetros:
 - Progresso (instâncias processadas)
 - Barra de progresso
 - Spinner de inicialização
-
----
 
 ## 🧪 Metodologia Experimental
 
@@ -201,8 +189,6 @@ Agrupamento por M:
 
 Geração de gráficos para análise do comportamento do sistema
 
----
-
 ## 📊 Métricas analisadas
 
 ### 🔹 Satisfazibilidade
@@ -223,8 +209,6 @@ Mede a variabilidade dos resultados:
 
 - importante para análise de instabilidade
 - relevante próximo à transição de fase
-
----
 
 ## 📈 Visualizações
 
@@ -250,8 +234,6 @@ Permite observar simultaneamente:
 
 - Evidencia variabilidade dos resultados
 
----
-
 ## 💾 Persistência de dados
 
 Os resultados são salvos automaticamente em:
@@ -272,14 +254,10 @@ Exemplo:
 20260323_153000_MaxSAT_N100_k3_f10_M100-500_seed42.csv
 ```
 
----
-
 ## 🔄 Reprodutibilidade
 
 - Seed fixa → resultados determinísticos
 - Seed ausente → diversidade estatística
-
----
 
 ## 🧵 Execução Paralela
 
@@ -288,15 +266,11 @@ Exemplo:
 - Execução incremental
 - Balanceamento dinâmico de tarefas
 
----
-
 ## 🛑 Controle de Execução
 
 - Interrupção segura via estado global
 - Não há perda de dados já processados
 - Interface permanece responsiva
-
----
 
 ## 📚 Base Teórica
 
@@ -313,8 +287,6 @@ Retorna:
 
 - custo mínimo (cláusulas não satisfeitas)
 
----
-
 ## 🎯 Objetivo
 
 O projeto foi desenvolvido com fins acadêmicos, visando:
@@ -324,8 +296,6 @@ O projeto foi desenvolvido com fins acadêmicos, visando:
 - Observação da transição de fase
 - Apoio a trabalhos como TCC
 
----
-
 ## 🚀 Possíveis Evoluções
 
 - Integração com Pandas
@@ -333,8 +303,6 @@ O projeto foi desenvolvido com fins acadêmicos, visando:
 - Suporte a outros solvers
 - Armazenamento em banco
 - Interface web (FastAPI / Next.js)
-
----
 
 ## 📄 Licença
 
