@@ -1,25 +1,29 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from tkinter import filedialog
 import csv
-
-from sat_core import SATConfig, generate_formulas_set
-
+import os
 import threading
 import time
-import os
+import tkinter as tk
+from collections import defaultdict
+from tkinter import filedialog
+from tkinter import ttk, messagebox
+
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+import numpy as np
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+from sat_core import SATConfig, generate_formulas_set
+from v4.solver_type import SolverType
 
 output_dir = "resultados"
 os.makedirs(output_dir, exist_ok=True)
 
-from v4.solver_type import SolverType
-
 stop_flag = {"stop": False}
 running_flag = {"running": False}
 
-def run_experiment(entries, frame_graph, label_timer, label_progress, progress_bar, solver_var, run_button, loading_label, loading_spinner):
+
+def run_experiment(entries, frame_graph, label_timer, label_progress, progress_bar, solver_var, run_button,
+                   loading_label, loading_spinner):
     running_flag["running"] = True
     stop_flag["stop"] = False
     run_button.config(state="disabled")
@@ -41,7 +45,6 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
             seed = int(entries["seed"].get()) if entries["seed"].get() else None
             solver_type = solver_var.get()
 
-            import time
             timestamp = time.strftime("%Y%m%d_%H%M%S")
             filename = f"{timestamp}_{solver_type}_N{num_vars}_k{k}_f{num_formulas}_M{min_clauses}-{max_clauses}_seed{seed or 'rand'}.csv"
             filepath = os.path.join(output_dir, filename)
@@ -115,15 +118,17 @@ def run_experiment(entries, frame_graph, label_timer, label_progress, progress_b
 
     threading.Thread(target=worker, daemon=True).start()
 
+
 def stop_experiment():
     stop_flag["stop"] = True
     running_flag["running"] = False
 
+
 def should_stop():
     return stop_flag["stop"]
 
-def reset_ui(frame_graph, label_timer, label_progress, progress_bar):
 
+def reset_ui(frame_graph, label_timer, label_progress, progress_bar):
     # resetar labels
     label_timer.config(text="Tempo de execução: 0.00 s")
     label_progress.config(text="Progresso: 0 / 0 instâncias")
@@ -135,29 +140,29 @@ def reset_ui(frame_graph, label_timer, label_progress, progress_bar):
     for widget in frame_graph.winfo_children():
         widget.destroy()
 
-def update_ui(done, total, elapsed, label_timer, label_progress, progress_bar):
 
+def update_ui(done, total, elapsed, label_timer, label_progress, progress_bar):
     label_timer.config(text=f"Tempo de execução: {elapsed:.2f} s")
 
     label_progress.config(text=f"Progresso: {done} / {total} instâncias")
 
     progress_bar["value"] = done / total * 100
 
-def show_loading(label_timer, label_progress, spinner):
 
+def show_loading(label_timer, label_progress, spinner):
     label_timer.config(text="Iniciando solver...")
     label_progress.config(text="")
 
     spinner.pack(pady=5)
     spinner.start(10)
 
-def hide_loading(spinner):
 
+def hide_loading(spinner):
     spinner.stop()
     spinner.pack_forget()
 
-def gui_runner():
 
+def gui_runner():
     root = tk.Tk()
     root.title("Experimento Max-SAT RC2")
 
@@ -176,7 +181,6 @@ def gui_runner():
     entries = {}
 
     for i, (label, key) in enumerate(labels):
-
         ttk.Label(frame_inputs, text=label).grid(row=i, column=0, sticky="w")
 
         entry = ttk.Entry(frame_inputs)
@@ -282,10 +286,9 @@ def gui_runner():
 
     return root
 
+
 def start_timer(label, start_time, running_flag):
-
     def update():
-
         if not running_flag["running"]:
             return
 
@@ -297,11 +300,9 @@ def start_timer(label, start_time, running_flag):
 
     update()
 
+
 def draw_graph(frame, data):
-
-    from collections import defaultdict
-    import matplotlib.ticker as ticker
-
+    # Agrupa os dados por número de cláusulas (M)
     groups = defaultdict(list)
 
     for M, time_spent, sat in data:
@@ -310,11 +311,19 @@ def draw_graph(frame, data):
     m_values = []
     avg_times = []
     avg_sat = []
+    std_times = []
+    std_sat = []
 
+    # Ordena os valores de M
     for M in sorted(groups):
-
         values = groups[M]
+        times = [v[0] for v in values]
+        sats = [v[1] for v in values]
 
+        std_times.append(np.std(times))
+        std_sat.append(np.std(sats) * 100)
+
+        # Cálculo das médias de tempo e satisfazibilidade
         avg_time = sum(v[0] for v in values) / len(values)
         avg_s = sum(v[1] for v in values) / len(values)
 
@@ -330,7 +339,7 @@ def draw_graph(frame, data):
     # GRÁFICO 1 — COMBINADO (tempo + satisfazibilidade)
     # ==================================================
 
-    fig1, ax1 = plt.subplots(figsize=(7,4))
+    fig1, ax1 = plt.subplots(figsize=(7, 4))
 
     ax1.set_xlabel("Número de cláusulas (M)")
     ax1.set_ylabel("Satisfazibilidade (%)", color="blue")
@@ -355,7 +364,7 @@ def draw_graph(frame, data):
     labels = [l.get_label() for l in lines]
 
     fig1.legend(lines, labels, loc="upper center", ncol=2)
-    fig1.tight_layout(rect=[0,0,1,0.9])
+    fig1.tight_layout(rect=[0, 0, 1, 0.9])
 
     canvas1 = FigureCanvasTkAgg(fig1, master=frame)
     canvas1.draw()
@@ -423,6 +432,42 @@ def draw_graph(frame, data):
     canvas3 = FigureCanvasTkAgg(fig3, master=frame)
     canvas3.draw()
     canvas3.get_tk_widget().pack(fill="both", expand=True, pady=10)
+
+    # ==================================================
+    # GRÁFICO 4 — TEMPO COM DESVIO PADRÃO
+    # ==================================================
+
+    fig4, ax = plt.subplots(figsize=(7, 4))
+
+    ax.set_title("Tempo médio com desvio padrão")
+    ax.set_xlabel("Número de cláusulas (M)")
+    ax.set_ylabel("Tempo médio (s)", color="orange")
+
+    ax.errorbar(
+        m_values,
+        avg_times,
+        yerr=std_times,
+        fmt='-o',
+        markersize=3,
+        color="orange",
+        ecolor="gray",
+        elinewidth=1,
+        capsize=3,
+        label="Tempo médio ± desvio padrão"
+    )
+
+    ax.tick_params(axis="y", labelcolor="orange")
+
+    ax.set_xlim(xmin - padding_x, xmax + padding_x)
+
+    ax.legend()
+
+    fig4.tight_layout()
+
+    canvas4 = FigureCanvasTkAgg(fig4, master=frame)
+    canvas4.draw()
+    canvas4.get_tk_widget().pack(fill="both", expand=True, pady=10)
+
 
 def load_data_and_plot(frame_graph):
     filepath = filedialog.askopenfilename(

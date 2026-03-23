@@ -99,7 +99,6 @@ def generate_random_cnf(num_vars: int, num_clauses: int, k: int):
     cnf = []
 
     for _ in range(num_clauses):
-
         # escolhe variáveis sem repetição
         variables = random.sample(range(1, num_vars + 1), k)
 
@@ -181,6 +180,7 @@ def solve_instance_weighted_partial_maxsat(args):
 
     return M, elapsed, satisf
 
+
 # ------------------------------------------------------------------
 # Run solver RC2 and return elapsed time and satisfaction ratio
 # ------------------------------------------------------------------
@@ -196,16 +196,17 @@ def run_rc2(wcnf, total_soft_weight):
 
     return elapsed, satisf
 
+
 # ------------------------------------------------------------------
 # Execução do experimento
 # ------------------------------------------------------------------
 
 def generate_formulas_set(
-    config: SATConfig,
-    progress_callback=None,
-    result_callback=None,
-    solver_type=SolverType.MAXSAT,
-    should_stop=None
+        config: SATConfig,
+        progress_callback=None,
+        result_callback=None,
+        solver_type=SolverType.MAXSAT,
+        should_stop=None
 ):
     base_seed = config.seed if config.seed is not None else random.randint(0, 10 ** 9)
 

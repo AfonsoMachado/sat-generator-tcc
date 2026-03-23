@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class SolverType(Enum):
     MAXSAT = "Max-sat"
     PARTIAL_MAXSAT = "Partial Max-sat"
