@@ -23,7 +23,7 @@ running_flag = {"running": False}
 
 
 def run_experiment(entries, frame_graph, label_timer, label_progress, progress_bar, solver_var, run_button,
-                   loading_label, loading_spinner):
+                   loading_spinner):
     running_flag["running"] = True
     stop_flag["stop"] = False
     run_button.config(state="disabled")
@@ -273,7 +273,6 @@ def gui_runner():
             progress_bar,
             solver_var,
             run_button,
-            loading_label,
             loading_spinner,
         )
     )
@@ -354,17 +353,17 @@ def draw_graph(frame, data):
     ax2.plot(m_values, avg_times, color="orange", label="Tempo")
     ax2.tick_params(axis="y", labelcolor="orange")
 
-    xmin = min(m_values)
-    xmax = max(m_values)
-    padding_x = (xmax - xmin) * 0.05
+    x_min = min(m_values)
+    x_max = max(m_values)
+    padding_x = (x_max - x_min) * 0.05
 
-    ax1.set_xlim(xmin - padding_x, xmax + padding_x)
+    ax1.set_xlim(x_min - padding_x, x_max + padding_x)
 
     lines = ax1.get_lines() + ax2.get_lines()
     labels = [l.get_label() for l in lines]
 
     fig1.legend(lines, labels, loc="upper center", ncol=2)
-    fig1.tight_layout(rect=[0, 0, 1, 0.9])
+    fig1.tight_layout(rect=(0.0, 0.0, 1.0, 0.9))
 
     canvas1 = FigureCanvasTkAgg(fig1, master=frame)
     canvas1.draw()
@@ -392,7 +391,7 @@ def draw_graph(frame, data):
     ax.tick_params(axis="y", labelcolor="blue")
     ax.yaxis.set_major_formatter(ticker.PercentFormatter())
 
-    ax.set_xlim(xmin - padding_x, xmax + padding_x)
+    ax.set_xlim(x_min - padding_x, x_max + padding_x)
 
     ax.legend()
 
@@ -423,7 +422,7 @@ def draw_graph(frame, data):
 
     ax.tick_params(axis="y", labelcolor="orange")
 
-    ax.set_xlim(xmin - padding_x, xmax + padding_x)
+    ax.set_xlim(x_min - padding_x, x_max + padding_x)
 
     ax.legend()
 
@@ -458,7 +457,7 @@ def draw_graph(frame, data):
 
     ax.tick_params(axis="y", labelcolor="orange")
 
-    ax.set_xlim(xmin - padding_x, xmax + padding_x)
+    ax.set_xlim(x_min - padding_x, x_max + padding_x)
 
     ax.legend()
 
