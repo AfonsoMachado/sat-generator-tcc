@@ -4,10 +4,8 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from core import ExperimentInputs, ExperimentResult
-from core.sat_core import generate_formulas_set
+from core import ExperimentInputs, ExperimentResult, generate_formulas_set, SolverType
 from infra import CSVResultWriter, load_results_from_csv
-from solver_type import SolverType
 from ui.components import (
     show_loading,
     reset_ui,
@@ -18,7 +16,7 @@ from ui.components import (
 from utils import stop_experiment, execution_state
 from visualization import draw_graphs
 
-OUTPUT_DIR = Path("../resultados")
+OUTPUT_DIR = Path("./resultados")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 
