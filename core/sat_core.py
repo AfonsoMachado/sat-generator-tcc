@@ -55,30 +55,12 @@ import os
 import random
 import time
 from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
-from dataclasses import dataclass
-from typing import Tuple
 
 from pysat.examples.rc2 import RC2
 from pysat.formula import WCNF
 
+from core.models import SATConfig
 from solver_type import SolverType
-
-
-# ------------------------------------------------------------------
-# Configuração do experimento
-# ------------------------------------------------------------------
-
-@dataclass
-class SATConfig:
-    """
-    Estrutura de configuração dos experimentos SAT.
-    """
-
-    num_formulas: int
-    num_global_variables: int
-    clauses_range: Tuple[int, int]
-    k_literals_per_clause: int
-    seed: int | None = None
 
 
 # ------------------------------------------------------------------
