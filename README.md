@@ -111,11 +111,43 @@ Isso facilita manutenção, testes e evolução futura.
 
 - Python 3.10+
 
-Instalação das dependências:
+### 🐍 Ambiente virtual (recomendado)
+
+Para evitar conflitos de dependências, recomenda-se utilizar um ambiente virtual.
+
+#### Criar ambiente virtual
 
 ```bash
-pip install python-sat matplotlib numpy
+python -m venv venv
 ```
+
+#### Ativar o ambiente
+
+**Windows:**
+
+```bash
+venv\Scripts\activate
+```
+
+**Linux/macOS:**
+
+```bash
+source venv/bin/activate
+```
+
+#### Instalar dependências
+
+Com `requirements.txt`:
+
+```bash
+pip install -r requirements.txt
+```
+
+> Caso necessário, você também pode instalar manualmente:
+>
+> ```bash
+> pip install python-sat matplotlib numpy
+> ```
 
 ## ▶️ Execução da aplicação
 
