@@ -1,3 +1,5 @@
 python-sat
 matplotlib
 numpy
+
+pytest
