@@ -2,3 +2,4 @@ python-sat
 matplotlib
 numpy
 pytest
+pysat
