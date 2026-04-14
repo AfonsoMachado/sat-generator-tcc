@@ -293,11 +293,11 @@ def build_inputs_section(root: tk.Tk) -> tuple[ttk.Frame, dict[str, ttk.Entry], 
 
     fields = [
         ("Número de fórmulas", "formulas"),
-        ("Nº variáveis", "vars"),
-        ("k", "k"),
-        ("Mín cláusulas", "min_clauses"),
-        ("Máx cláusulas", "max_clauses"),
-        ("Passo cláusulas", "step_clauses"),
+        ("Nº variáveis (N)", "vars"),
+        ("Literais por cláusula (k)", "k"),
+        ("Mín cláusulas (M)", "min_clauses"),
+        ("Máx cláusulas (M)", "max_clauses"),
+        ("Passo de M", "step_clauses"),
         ("Seed (opcional)", "seed"),
     ]
 
