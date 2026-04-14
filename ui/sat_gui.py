@@ -20,7 +20,11 @@ OUTPUT_DIR = Path("./resultados")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 
-def parse_inputs(entries: dict[str, ttk.Entry], solver_var: tk.StringVar) -> ExperimentInputs:
+def parse_inputs(
+        entries: dict[str, ttk.Entry],
+        solver_var: tk.StringVar,
+        mode_var: tk.StringVar,
+) -> ExperimentInputs:
     """
     Lê e valida os parâmetros informados pelo usuário na interface gráfica.
 
@@ -31,21 +35,24 @@ def parse_inputs(entries: dict[str, ttk.Entry], solver_var: tk.StringVar) -> Exp
     Tratamento especial:
     - A seed é opcional: caso não informada, será considerada como None,
       permitindo geração aleatória posterior.
+    - O modo "N fixo" usa o campo `vars`; o modo "Razão M/N" usa o campo `ratio`.
 
     Parâmetros:
     - entries: dicionário contendo os campos da interface
     - solver_var: variável associada ao seletor de tipo de solver
+    - mode_var: variável do toggle "n" / "ratio"
 
     Retorno:
     - Objeto `ExperimentInputs` com os parâmetros do experimento
     """
     seed_raw = entries["seed"].get().strip()
-
     step_raw = entries["step_clauses"].get().strip()
+    use_ratio = mode_var.get() == "ratio"
 
     return ExperimentInputs(
         num_formulas=int(entries["formulas"].get()),
-        num_vars=int(entries["vars"].get()),
+        num_vars=None if use_ratio else int(entries["vars"].get()),
+        ratio=float(entries["ratio"].get()) if use_ratio else None,
         k=int(entries["k"].get()),
         min_clauses=int(entries["min_clauses"].get()),
         max_clauses=int(entries["max_clauses"].get()),
@@ -65,6 +72,7 @@ def run_experiment(
         run_button: ttk.Button,
         loading_spinner: ttk.Progressbar,
         markers_var: tk.BooleanVar,
+        mode_var: tk.StringVar,
 ) -> None:
     """
     Executa o experimento em uma thread separada, mantendo a interface responsiva.
@@ -109,7 +117,7 @@ def run_experiment(
         writer: CSVResultWriter | None = None
 
         try:
-            experiment_inputs = parse_inputs(entries, solver_var)
+            experiment_inputs = parse_inputs(entries, solver_var, mode_var)
             filepath = OUTPUT_DIR / experiment_inputs.build_output_filename()
 
             writer = CSVResultWriter(filepath)
@@ -267,13 +275,15 @@ def create_labeled_entry(
     return entry
 
 
-def build_inputs_section(root: tk.Tk) -> tuple[ttk.Frame, dict[str, ttk.Entry], tk.StringVar, tk.BooleanVar]:
+def build_inputs_section(
+        root: tk.Tk,
+) -> tuple[ttk.Frame, dict[str, ttk.Entry], tk.StringVar, tk.BooleanVar, tk.StringVar]:
     """
     Constrói a seção de entrada de parâmetros do experimento.
 
     Essa área permite ao usuário configurar:
     - Número de fórmulas
-    - Número de variáveis (N)
+    - N fixo ou Razão M/N (com toggle via radio buttons)
     - Literais por cláusula (k)
     - Intervalo de cláusulas (M)
     - Seed opcional
@@ -281,35 +291,69 @@ def build_inputs_section(root: tk.Tk) -> tuple[ttk.Frame, dict[str, ttk.Entry], 
 
     Componentes:
     - Campos de entrada (Entry)
+    - Radio buttons para o modo N fixo / Razão M/N
     - Combobox para seleção do solver
 
     Retorno:
     - Frame da seção
     - Dicionário de entries
     - Variável associada ao solver selecionado
+    - Variável do checkbox de marcadores
+    - Variável do modo ("n" ou "ratio")
     """
     frame_inputs = ttk.Frame(root, padding=10)
     frame_inputs.pack(fill="x")
 
-    fields = [
-        ("Número de fórmulas", "formulas"),
-        ("Nº variáveis (N)", "vars"),
+    entries: dict[str, ttk.Entry] = {}
+    row = 0
+
+    # Número de fórmulas
+    entries["formulas"] = create_labeled_entry(frame_inputs, row, "Número de fórmulas")
+    row += 1
+
+    # Toggle N fixo / Razão M/N
+    mode_var = tk.StringVar(value="n")
+    mode_frame = ttk.Frame(frame_inputs)
+    mode_frame.grid(row=row, column=0, columnspan=2, sticky="w", pady=(6, 2))
+    ttk.Radiobutton(mode_frame, text="N fixo", variable=mode_var, value="n").pack(side="left")
+    ttk.Radiobutton(
+        mode_frame, text="Razão M/N", variable=mode_var, value="ratio",
+    ).pack(side="left", padx=(12, 0))
+    row += 1
+
+    # N (activo por defeito)
+    entries["vars"] = create_labeled_entry(frame_inputs, row, "Nº variáveis (N)")
+    row += 1
+
+    # Razão M/N (desactivado por defeito)
+    entries["ratio"] = create_labeled_entry(frame_inputs, row, "Razão M/N")
+    entries["ratio"].config(state="disabled")
+    row += 1
+
+    def toggle_mode(*_) -> None:
+        if mode_var.get() == "n":
+            entries["vars"].config(state="normal")
+            entries["ratio"].config(state="disabled")
+        else:
+            entries["vars"].config(state="disabled")
+            entries["ratio"].config(state="normal")
+
+    mode_var.trace_add("write", toggle_mode)
+
+    # Restantes campos
+    for label_text, key in [
         ("Literais por cláusula (k)", "k"),
         ("Mín cláusulas (M)", "min_clauses"),
         ("Máx cláusulas (M)", "max_clauses"),
         ("Passo de M", "step_clauses"),
         ("Seed (opcional)", "seed"),
-    ]
-
-    entries: dict[str, ttk.Entry] = {}
-
-    for row, (label_text, key) in enumerate(fields):
+    ]:
         entries[key] = create_labeled_entry(frame_inputs, row, label_text)
+        row += 1
 
     entries["step_clauses"].insert(0, "1")
 
-    ttk.Label(frame_inputs, text="Tipo de solver").grid(row=len(fields), column=0, sticky="w")
-
+    ttk.Label(frame_inputs, text="Tipo de solver").grid(row=row, column=0, sticky="w")
     solver_var = tk.StringVar(value=SolverType.MAXSAT.value)
     solver_selector = ttk.Combobox(
         frame_inputs,
@@ -317,16 +361,17 @@ def build_inputs_section(root: tk.Tk) -> tuple[ttk.Frame, dict[str, ttk.Entry], 
         state="readonly",
         values=[solver.value for solver in SolverType],
     )
-    solver_selector.grid(row=len(fields), column=1)
+    solver_selector.grid(row=row, column=1)
+    row += 1
 
     markers_var = tk.BooleanVar(value=True)
     ttk.Checkbutton(
         frame_inputs,
         text="Marcadores nos pontos",
         variable=markers_var,
-    ).grid(row=len(fields) + 1, column=0, columnspan=2, sticky="w")
+    ).grid(row=row, column=0, columnspan=2, sticky="w")
 
-    return frame_inputs, entries, solver_var, markers_var
+    return frame_inputs, entries, solver_var, markers_var, mode_var
 
 
 def build_status_section(root: tk.Tk) -> tuple[ttk.Progressbar, ttk.Label, ttk.Label, ttk.Progressbar]:
@@ -424,6 +469,7 @@ def build_buttons_section(
         solver_var: tk.StringVar,
         loading_spinner: ttk.Progressbar,
         markers_var: tk.BooleanVar,
+        mode_var: tk.StringVar,
 ) -> None:
     """
     Constrói a seção de botões de controle da aplicação.
@@ -460,6 +506,7 @@ def build_buttons_section(
             run_button=run_button,
             loading_spinner=loading_spinner,
             markers_var=markers_var,
+            mode_var=mode_var,
         )
     )
 
@@ -490,7 +537,7 @@ def gui_runner() -> tk.Tk:
     root = tk.Tk()
     root.title("Experimento Max-SAT RC2")
 
-    _, entries, solver_var, markers_var = build_inputs_section(root)
+    _, entries, solver_var, markers_var, mode_var = build_inputs_section(root)
     loading_spinner, label_timer, label_progress, progress_bar = build_status_section(root)
     frame_graph = build_graph_section(root)
 
@@ -504,6 +551,7 @@ def gui_runner() -> tk.Tk:
         solver_var=solver_var,
         loading_spinner=loading_spinner,
         markers_var=markers_var,
+        mode_var=mode_var,
     )
 
     return root

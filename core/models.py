@@ -24,11 +24,12 @@ class SATConfig:
     """
 
     num_formulas: int
-    num_global_variables: int
     clauses_range: Tuple[int, int]
     k_literals_per_clause: int
+    num_global_variables: int = 0
     seed: int | None = None
     clauses_step: int = 1
+    ratio: float | None = None
 
 
 @dataclass(slots=True)
@@ -42,7 +43,8 @@ class ExperimentInputs:
 
     Parâmetros:
     - num_formulas: número de fórmulas por amostra
-    - num_vars: número de variáveis (N)
+    - num_vars: número de variáveis fixo (N); None quando modo razão está activo
+    - ratio: razão M/N fixa; None quando modo N fixo está activo
     - k: literais por cláusula
     - min_clauses: valor mínimo de cláusulas (M inicial)
     - max_clauses: valor máximo de cláusulas (M final)
@@ -52,7 +54,8 @@ class ExperimentInputs:
     """
 
     num_formulas: int
-    num_vars: int
+    num_vars: int | None
+    ratio: float | None
     k: int
     min_clauses: int
     max_clauses: int
@@ -69,11 +72,12 @@ class ExperimentInputs:
         """
         return SATConfig(
             num_formulas=self.num_formulas,
-            num_global_variables=self.num_vars,
+            num_global_variables=self.num_vars or 0,
             clauses_range=(self.min_clauses, self.max_clauses),
             k_literals_per_clause=self.k,
             seed=self.seed,
             clauses_step=self.step_clauses,
+            ratio=self.ratio,
         )
 
     def build_output_filename(self) -> str:
@@ -97,12 +101,16 @@ class ExperimentInputs:
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         seed_label = self.seed if self.seed is not None else "rand"
 
+        n_part = (
+            f"_N{self.num_vars}" if self.num_vars is not None
+            else f"_ratio{self.ratio}"
+        )
         return (
             f"{timestamp}_{self.solver_type}"
-            f"_N{self.num_vars}"
-            f"_k{self.k}"
-            f"_f{self.num_formulas}"
-            f"_M{self.min_clauses}-{self.max_clauses}"
+            + n_part
+            + f"_k{self.k}"
+            + f"_f{self.num_formulas}"
+            + f"_M{self.min_clauses}-{self.max_clauses}"
             + (f"_step{self.step_clauses}" if self.step_clauses != 1 else "")
             + f"_seed{seed_label}.csv"
         )
