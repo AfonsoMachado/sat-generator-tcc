@@ -63,13 +63,14 @@ def generate_formulas_set(
     N = config.num_global_variables
     k = config.k_literals_per_clause
     min_M, max_M = config.clauses_range
+    step_M = config.clauses_step
 
     # Geração das instâncias (cartesiano de M x num_formulas)
     # Cada instância recebe uma seed única derivada da base
     instances = [
         (N, M, k, base_seed + idx)
         for idx, M in enumerate(
-            M for M in range(min_M, max_M + 1)
+            M for M in range(min_M, max_M + 1, step_M)
             for _ in range(config.num_formulas)
         )
     ]

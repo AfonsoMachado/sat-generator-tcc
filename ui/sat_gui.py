@@ -41,12 +41,15 @@ def parse_inputs(entries: dict[str, ttk.Entry], solver_var: tk.StringVar) -> Exp
     """
     seed_raw = entries["seed"].get().strip()
 
+    step_raw = entries["step_clauses"].get().strip()
+
     return ExperimentInputs(
         num_formulas=int(entries["formulas"].get()),
         num_vars=int(entries["vars"].get()),
         k=int(entries["k"].get()),
         min_clauses=int(entries["min_clauses"].get()),
         max_clauses=int(entries["max_clauses"].get()),
+        step_clauses=int(step_raw) if step_raw else 1,
         seed=int(seed_raw) if seed_raw else None,
         solver_type=solver_var.get(),
     )
@@ -61,6 +64,7 @@ def run_experiment(
         solver_var: tk.StringVar,
         run_button: ttk.Button,
         loading_spinner: ttk.Progressbar,
+        markers_var: tk.BooleanVar,
 ) -> None:
     """
     Executa o experimento em uma thread separada, mantendo a interface responsiva.
@@ -161,7 +165,8 @@ def run_experiment(
             execution_state.finish()
 
             if partial_results:
-                frame_graph.after(0, lambda: draw_graphs(frame_graph, partial_results))  # type: ignore
+                show_markers = markers_var.get()
+                frame_graph.after(0, lambda m=show_markers: draw_graphs(frame_graph, partial_results, m))  # type: ignore
 
             frame_graph.after(0, lambda: run_button.config(state="normal"))  # type: ignore
 
@@ -169,7 +174,8 @@ def run_experiment(
             execution_state.finish()
 
             if str(exc) == "STOP_REQUESTED":
-                frame_graph.after(0, lambda: draw_graphs(frame_graph, partial_results))  # type: ignore
+                show_markers = markers_var.get()
+                frame_graph.after(0, lambda m=show_markers: draw_graphs(frame_graph, partial_results, m))  # type: ignore
             else:
                 frame_graph.after(0, lambda err=exc: messagebox.showerror("Erro", str(err)))  # type: ignore
 
@@ -195,7 +201,7 @@ def run_experiment(
 # CARREGAMENTO DE DADOS
 # ============================================================
 
-def load_data_and_plot(frame_graph: ttk.Frame) -> None:
+def load_data_and_plot(frame_graph: ttk.Frame, markers_var: tk.BooleanVar) -> None:
     """
     Permite carregar resultados previamente salvos e reconstruir os gráficos.
 
@@ -225,7 +231,7 @@ def load_data_and_plot(frame_graph: ttk.Frame) -> None:
     try:
         data = load_results_from_csv(filepath)
         if data:
-            draw_graphs(frame_graph, data)
+            draw_graphs(frame_graph, data, markers_var.get())
         else:
             messagebox.showwarning("Aviso", "Nenhum dado válido foi encontrado no arquivo.")
     except Exception as exc:
@@ -261,7 +267,7 @@ def create_labeled_entry(
     return entry
 
 
-def build_inputs_section(root: tk.Tk) -> tuple[ttk.Frame, dict[str, ttk.Entry], tk.StringVar]:
+def build_inputs_section(root: tk.Tk) -> tuple[ttk.Frame, dict[str, ttk.Entry], tk.StringVar, tk.BooleanVar]:
     """
     Constrói a seção de entrada de parâmetros do experimento.
 
@@ -291,6 +297,7 @@ def build_inputs_section(root: tk.Tk) -> tuple[ttk.Frame, dict[str, ttk.Entry], 
         ("k", "k"),
         ("Mín cláusulas", "min_clauses"),
         ("Máx cláusulas", "max_clauses"),
+        ("Passo cláusulas", "step_clauses"),
         ("Seed (opcional)", "seed"),
     ]
 
@@ -298,6 +305,8 @@ def build_inputs_section(root: tk.Tk) -> tuple[ttk.Frame, dict[str, ttk.Entry], 
 
     for row, (label_text, key) in enumerate(fields):
         entries[key] = create_labeled_entry(frame_inputs, row, label_text)
+
+    entries["step_clauses"].insert(0, "1")
 
     ttk.Label(frame_inputs, text="Tipo de solver").grid(row=len(fields), column=0, sticky="w")
 
@@ -310,7 +319,14 @@ def build_inputs_section(root: tk.Tk) -> tuple[ttk.Frame, dict[str, ttk.Entry], 
     )
     solver_selector.grid(row=len(fields), column=1)
 
-    return frame_inputs, entries, solver_var
+    markers_var = tk.BooleanVar(value=True)
+    ttk.Checkbutton(
+        frame_inputs,
+        text="Marcadores nos pontos",
+        variable=markers_var,
+    ).grid(row=len(fields) + 1, column=0, columnspan=2, sticky="w")
+
+    return frame_inputs, entries, solver_var, markers_var
 
 
 def build_status_section(root: tk.Tk) -> tuple[ttk.Progressbar, ttk.Label, ttk.Label, ttk.Progressbar]:
@@ -407,6 +423,7 @@ def build_buttons_section(
         progress_bar: ttk.Progressbar,
         solver_var: tk.StringVar,
         loading_spinner: ttk.Progressbar,
+        markers_var: tk.BooleanVar,
 ) -> None:
     """
     Constrói a seção de botões de controle da aplicação.
@@ -426,7 +443,7 @@ def build_buttons_section(
     ttk.Button(
         button_frame,
         text="Carregar dados",
-        command=lambda: load_data_and_plot(frame_graph),
+        command=lambda: load_data_and_plot(frame_graph, markers_var),
     ).pack(side="left", padx=5)
 
     run_button = ttk.Button(button_frame, text="Executar Experimento")
@@ -442,6 +459,7 @@ def build_buttons_section(
             solver_var=solver_var,
             run_button=run_button,
             loading_spinner=loading_spinner,
+            markers_var=markers_var,
         )
     )
 
@@ -472,7 +490,7 @@ def gui_runner() -> tk.Tk:
     root = tk.Tk()
     root.title("Experimento Max-SAT RC2")
 
-    _, entries, solver_var = build_inputs_section(root)
+    _, entries, solver_var, markers_var = build_inputs_section(root)
     loading_spinner, label_timer, label_progress, progress_bar = build_status_section(root)
     frame_graph = build_graph_section(root)
 
@@ -485,6 +503,7 @@ def gui_runner() -> tk.Tk:
         progress_bar=progress_bar,
         solver_var=solver_var,
         loading_spinner=loading_spinner,
+        markers_var=markers_var,
     )
 
     return root

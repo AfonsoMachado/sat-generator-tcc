@@ -8,7 +8,11 @@ from core.stats import aggregate_results
 from ui.components import clear_frame
 
 
-def draw_graphs(frame: ttk.Frame, data: list[ExperimentResult]) -> None:
+def draw_graphs(
+        frame: ttk.Frame,
+        data: list[ExperimentResult],
+        show_markers: bool = True,
+) -> None:
     """
     Renderiza todos os gráficos a partir dos resultados do experimento.
 
@@ -26,6 +30,7 @@ def draw_graphs(frame: ttk.Frame, data: list[ExperimentResult]) -> None:
     Parâmetros:
     - frame: container onde os gráficos serão renderizados
     - data: lista de resultados individuais do experimento
+    - show_markers: exibe marcadores nos pontos dos gráficos (default: True)
 
     Observação:
     Caso não haja dados, a função não realiza nenhuma ação.
@@ -36,13 +41,17 @@ def draw_graphs(frame: ttk.Frame, data: list[ExperimentResult]) -> None:
     clear_frame(frame)
     stats = aggregate_results(data)
 
-    create_combined_chart(frame, stats)
-    create_satisfiability_chart(frame, stats)
-    create_time_chart(frame, stats)
-    create_time_std_chart(frame, stats)
+    create_combined_chart(frame, stats, show_markers)
+    create_satisfiability_chart(frame, stats, show_markers)
+    create_time_chart(frame, stats, show_markers)
+    create_time_std_chart(frame, stats, show_markers)
 
 
-def create_combined_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> None:
+def create_combined_chart(
+        frame: ttk.Frame,
+        stats: list[AggregatedStats],
+        show_markers: bool = True,
+) -> None:
     """
     Cria um gráfico combinado com dois eixos Y:
     - Satisfazibilidade (%) no eixo esquerdo
@@ -60,7 +69,9 @@ def create_combined_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> Non
     Parâmetros:
     - frame: container de renderização
     - stats: estatísticas agregadas por M
+    - show_markers: exibe marcadores nos pontos
     """
+    marker = "o" if show_markers else None
     m_values, avg_times, _, avg_sat, _ = extract_plot_series(stats)
     x_left, x_right = calculate_x_limits(m_values)
 
@@ -68,14 +79,14 @@ def create_combined_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> Non
 
     ax1.set_xlabel("Número de cláusulas (M)")
     ax1.set_ylabel("Satisfazibilidade (%)", color="blue")
-    ax1.plot(m_values, avg_sat, color="blue", label="Satisfazibilidade")
+    ax1.plot(m_values, avg_sat, color="blue", marker=marker, markersize=3, label="Satisfazibilidade")
     ax1.tick_params(axis="y", labelcolor="blue")
     ax1.yaxis.set_major_formatter(ticker.PercentFormatter())
     ax1.set_xlim(x_left, x_right)
 
     ax2 = ax1.twinx()
     ax2.set_ylabel("Tempo médio (s)", color="orange")
-    ax2.plot(m_values, avg_times, color="orange", label="Tempo")
+    ax2.plot(m_values, avg_times, color="orange", marker=marker, markersize=3, label="Tempo")
     ax2.tick_params(axis="y", labelcolor="orange")
 
     lines = ax1.get_lines() + ax2.get_lines()
@@ -87,7 +98,11 @@ def create_combined_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> Non
     render_plot(frame, fig)
 
 
-def create_time_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> None:
+def create_time_chart(
+        frame: ttk.Frame,
+        stats: list[AggregatedStats],
+        show_markers: bool = True,
+) -> None:
     """
     Cria o gráfico de tempo médio de resolução.
 
@@ -102,6 +117,7 @@ def create_time_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> None:
     Parâmetros:
     - frame: container de renderização
     - stats: estatísticas agregadas
+    - show_markers: exibe marcadores nos pontos
     """
     m_values, avg_times, _, _, _ = extract_plot_series(stats)
     x_left, x_right = calculate_x_limits(m_values)
@@ -115,7 +131,7 @@ def create_time_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> None:
         m_values,
         avg_times,
         color="orange",
-        marker="o",
+        marker="o" if show_markers else None,
         markersize=3,
         label="Tempo médio",
     )
@@ -198,7 +214,11 @@ def render_plot(frame: ttk.Frame, fig: plt.Figure) -> None:
     canvas.get_tk_widget().pack(fill="both", expand=True, pady=10)
 
 
-def create_satisfiability_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> None:
+def create_satisfiability_chart(
+        frame: ttk.Frame,
+        stats: list[AggregatedStats],
+        show_markers: bool = True,
+) -> None:
     """
     Cria o gráfico de satisfazibilidade média.
 
@@ -214,6 +234,7 @@ def create_satisfiability_chart(frame: ttk.Frame, stats: list[AggregatedStats]) 
     Parâmetros:
     - frame: container de renderização
     - stats: estatísticas agregadas
+    - show_markers: exibe marcadores nos pontos
     """
     m_values, _, _, avg_sat, _ = extract_plot_series(stats)
     x_left, x_right = calculate_x_limits(m_values)
@@ -227,7 +248,7 @@ def create_satisfiability_chart(frame: ttk.Frame, stats: list[AggregatedStats]) 
         m_values,
         avg_sat,
         color="blue",
-        marker="o",
+        marker="o" if show_markers else None,
         markersize=3,
         label="Satisfazibilidade",
     )
@@ -240,7 +261,11 @@ def create_satisfiability_chart(frame: ttk.Frame, stats: list[AggregatedStats]) 
     render_plot(frame, fig)
 
 
-def create_time_std_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> None:
+def create_time_std_chart(
+        frame: ttk.Frame,
+        stats: list[AggregatedStats],
+        show_markers: bool = True,
+) -> None:
     """
     Cria o gráfico de tempo médio com desvio padrão.
 
@@ -259,6 +284,7 @@ def create_time_std_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> Non
     Parâmetros:
     - frame: container de renderização
     - stats: estatísticas agregadas
+    - show_markers: exibe marcadores nos pontos
     """
     m_values, avg_times, std_times, _, _ = extract_plot_series(stats)
     x_left, x_right = calculate_x_limits(m_values)
@@ -272,7 +298,7 @@ def create_time_std_chart(frame: ttk.Frame, stats: list[AggregatedStats]) -> Non
         m_values,
         avg_times,
         yerr=std_times,
-        fmt="-o",
+        fmt="-o" if show_markers else "-",
         markersize=3,
         color="orange",
         ecolor="gray",

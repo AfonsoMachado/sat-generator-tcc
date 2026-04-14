@@ -28,6 +28,7 @@ class SATConfig:
     clauses_range: Tuple[int, int]
     k_literals_per_clause: int
     seed: int | None = None
+    clauses_step: int = 1
 
 
 @dataclass(slots=True)
@@ -45,6 +46,7 @@ class ExperimentInputs:
     - k: literais por cláusula
     - min_clauses: valor mínimo de cláusulas (M inicial)
     - max_clauses: valor máximo de cláusulas (M final)
+    - step_clauses: passo de incremento entre valores de M (default: 1)
     - seed: seed opcional para controle de aleatoriedade
     - solver_type: tipo de solver utilizado (ex: MaxSAT, Partial MaxSAT)
     """
@@ -54,6 +56,7 @@ class ExperimentInputs:
     k: int
     min_clauses: int
     max_clauses: int
+    step_clauses: int
     seed: int | None
     solver_type: str
 
@@ -70,6 +73,7 @@ class ExperimentInputs:
             clauses_range=(self.min_clauses, self.max_clauses),
             k_literals_per_clause=self.k,
             seed=self.seed,
+            clauses_step=self.step_clauses,
         )
 
     def build_output_filename(self) -> str:
@@ -99,7 +103,8 @@ class ExperimentInputs:
             f"_k{self.k}"
             f"_f{self.num_formulas}"
             f"_M{self.min_clauses}-{self.max_clauses}"
-            f"_seed{seed_label}.csv"
+            + (f"_step{self.step_clauses}" if self.step_clauses != 1 else "")
+            + f"_seed{seed_label}.csv"
         )
 
 
