@@ -124,6 +124,74 @@ def test_solver_type_selection():
     assert len(result) == 1
 
 
+def test_clauses_step_generates_correct_m_values():
+    """
+    GIVEN um passo de cláusulas maior que 1
+    WHEN as fórmulas são geradas
+    THEN somente os valores de M correspondentes ao passo devem aparecer nos resultados
+    """
+    config = SATConfig(
+        num_formulas=1,
+        num_global_variables=10,
+        clauses_range=(4, 10),
+        k_literals_per_clause=3,
+        seed=42,
+        clauses_step=3,
+    )
+
+    # WHEN
+    results = generate_formulas_set(config)
+
+    # THEN: range(4, 11, 3) → M ∈ {4, 7, 10}
+    assert len(results) == 3
+    assert {r[0] for r in results} == {4, 7, 10}
+
+
+def test_clauses_step_reduces_instance_count():
+    """
+    GIVEN um passo de 2 num intervalo de 6 valores consecutivos
+    WHEN as fórmulas são geradas
+    THEN o número de instâncias deve ser metade do que com passo 1
+    """
+    base_config = dict(
+        num_formulas=2,
+        num_global_variables=10,
+        clauses_range=(2, 6),
+        k_literals_per_clause=3,
+        seed=42,
+    )
+
+    results_step1 = generate_formulas_set(SATConfig(**base_config, clauses_step=1))
+    results_step2 = generate_formulas_set(SATConfig(**base_config, clauses_step=2))
+
+    # step=1 → M ∈ {2,3,4,5,6} → 5 × 2 = 10 instâncias
+    # step=2 → M ∈ {2,4,6}     → 3 × 2 =  6 instâncias
+    assert len(results_step1) == 10
+    assert len(results_step2) == 6
+
+
+def test_clauses_step_default_backward_compatible():
+    """
+    GIVEN uma configuração sem passo explícito (default=1)
+    WHEN as fórmulas são geradas
+    THEN o comportamento deve ser idêntico ao original
+    """
+    config = SATConfig(
+        num_formulas=2,
+        num_global_variables=10,
+        clauses_range=(5, 6),
+        k_literals_per_clause=3,
+        seed=42,
+    )
+
+    # WHEN
+    results = generate_formulas_set(config)
+
+    # THEN: mesmo comportamento do teste original (M=5,6 × 2 fórmulas = 4)
+    assert len(results) == 4
+    assert {r[0] for r in results} == {5, 6}
+
+
 def test_same_seed_same_results_structure():
     """
     GIVEN uma seed fixa
