@@ -43,8 +43,8 @@ class ExperimentInputs:
 
     Parâmetros:
     - num_formulas: número de fórmulas por amostra
-    - num_vars: número de variáveis fixo (N); None quando modo razão está activo
-    - ratio: razão M/N fixa; None quando modo N fixo está activo
+    - num_vars: número de variáveis fixo (N); None quando modo razão está ativo
+    - ratio: razão M/N fixa; None quando modo N fixo está ativo
     - k: literais por cláusula
     - min_clauses: valor mínimo de cláusulas (M inicial)
     - max_clauses: valor máximo de cláusulas (M final)
@@ -106,13 +106,13 @@ class ExperimentInputs:
             else f"_ratio{self.ratio}"
         )
         return (
-            f"{timestamp}_{self.solver_type}"
-            + n_part
-            + f"_k{self.k}"
-            + f"_f{self.num_formulas}"
-            + f"_M{self.min_clauses}-{self.max_clauses}"
-            + (f"_step{self.step_clauses}" if self.step_clauses != 1 else "")
-            + f"_seed{seed_label}.csv"
+                f"{timestamp}_{self.solver_type}"
+                + n_part
+                + f"_k{self.k}"
+                + f"_f{self.num_formulas}"
+                + f"_M{self.min_clauses}-{self.max_clauses}"
+                + (f"_step{self.step_clauses}" if self.step_clauses != 1 else "")
+                + f"_seed{seed_label}.csv"
         )
 
 

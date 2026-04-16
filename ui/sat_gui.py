@@ -174,7 +174,8 @@ def run_experiment(
 
             if partial_results:
                 show_markers = markers_var.get()
-                frame_graph.after(0, lambda m=show_markers: draw_graphs(frame_graph, partial_results, m))  # type: ignore
+                frame_graph.after(0,
+                                  lambda m=show_markers: draw_graphs(frame_graph, partial_results, m))  # type: ignore
 
             frame_graph.after(0, lambda: run_button.config(state="normal"))  # type: ignore
 
@@ -183,7 +184,8 @@ def run_experiment(
 
             if str(exc) == "STOP_REQUESTED":
                 show_markers = markers_var.get()
-                frame_graph.after(0, lambda m=show_markers: draw_graphs(frame_graph, partial_results, m))  # type: ignore
+                frame_graph.after(0,
+                                  lambda m=show_markers: draw_graphs(frame_graph, partial_results, m))  # type: ignore
             else:
                 frame_graph.after(0, lambda err=exc: messagebox.showerror("Erro", str(err)))  # type: ignore
 
@@ -321,11 +323,11 @@ def build_inputs_section(
     ).pack(side="left", padx=(12, 0))
     row += 1
 
-    # N (activo por defeito)
+    # N (ativo por defeito)
     entries["vars"] = create_labeled_entry(frame_inputs, row, "Nº variáveis (N)")
     row += 1
 
-    # Razão M/N (desactivado por defeito)
+    # Razão M/N (desativado por defeito)
     entries["ratio"] = create_labeled_entry(frame_inputs, row, "Razão M/N")
     entries["ratio"].config(state="disabled")
     row += 1
