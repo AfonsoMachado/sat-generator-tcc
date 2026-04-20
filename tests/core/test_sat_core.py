@@ -118,7 +118,9 @@ def test_solver_type_selection():
     )
 
     # WHEN
-    result = generate_formulas_set(config, solver_type=SolverType.PARTIAL_MAXSAT)
+    result = generate_formulas_set(
+        config, solver_type=SolverType.PARTIAL_MAXSAT
+    )
 
     # THEN
     assert len(result) == 1
@@ -128,7 +130,7 @@ def test_clauses_step_generates_correct_m_values():
     """
     GIVEN um passo de cláusulas maior que 1
     WHEN as fórmulas são geradas
-    THEN somente os valores de M correspondentes ao passo devem aparecer nos resultados
+    THEN somente os valores de M do passo devem aparecer nos resultados
     """
     config = SATConfig(
         num_formulas=1,
@@ -161,13 +163,64 @@ def test_clauses_step_reduces_instance_count():
         seed=42,
     )
 
-    results_step1 = generate_formulas_set(SATConfig(**base_config, clauses_step=1))
-    results_step2 = generate_formulas_set(SATConfig(**base_config, clauses_step=2))
+    results_step1 = generate_formulas_set(
+        SATConfig(**base_config, clauses_step=1)
+    )
+    results_step2 = generate_formulas_set(
+        SATConfig(**base_config, clauses_step=2)
+    )
 
     # step=1 → M ∈ {2,3,4,5,6} → 5 × 2 = 10 instâncias
     # step=2 → M ∈ {2,4,6}     → 3 × 2 =  6 instâncias
     assert len(results_step1) == 10
     assert len(results_step2) == 6
+
+
+def test_ratio_mode_generates_results():
+    """
+    GIVEN modo razão com ratio=3 e um único ponto M=6
+    WHEN as fórmulas são geradas
+    THEN deve produzir um resultado válido com N = round(6/3) = 2
+    """
+    config = SATConfig(
+        num_formulas=1,
+        clauses_range=(6, 6),
+        k_literals_per_clause=2,
+        seed=42,
+        ratio=3.0,
+    )
+
+    # WHEN
+    results = generate_formulas_set(config)
+
+    # THEN
+    assert len(results) == 1
+    M, elapsed, satisf = results[0]
+    assert M == 6
+    assert isinstance(elapsed, float)
+    assert 0 <= satisf <= 1
+
+
+def test_ratio_mode_n_varies_with_m():
+    """
+    GIVEN modo razão com ratio=2 e range(4, 6)
+    WHEN as fórmulas são geradas
+    THEN deve produzir um resultado para cada valor de M, com N distinto
+    """
+    config = SATConfig(
+        num_formulas=1,
+        clauses_range=(4, 6),
+        k_literals_per_clause=2,
+        seed=42,
+        ratio=2.0,  # M=4→N=2, M=5→N=3, M=6→N=3
+    )
+
+    # WHEN
+    results = generate_formulas_set(config)
+
+    # THEN
+    assert len(results) == 3
+    assert {r[0] for r in results} == {4, 5, 6}
 
 
 def test_clauses_step_default_backward_compatible():

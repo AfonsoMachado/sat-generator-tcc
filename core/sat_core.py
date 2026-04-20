@@ -60,20 +60,30 @@ def generate_formulas_set(
     # Define seed base (fixa para reprodutibilidade ou aleatória para diversidade)
     base_seed = config.seed if config.seed is not None else random.randint(0, 10 ** 9)
 
-    N = config.num_global_variables
     k = config.k_literals_per_clause
     min_M, max_M = config.clauses_range
     step_M = config.clauses_step
 
     # Geração das instâncias (cartesiano de M x num_formulas)
     # Cada instância recebe uma seed única derivada da base
-    instances = [
-        (N, M, k, base_seed + idx)
-        for idx, M in enumerate(
-            M for M in range(min_M, max_M + 1, step_M)
-            for _ in range(config.num_formulas)
-        )
-    ]
+    # Em modo razão, N é calculado por ponto: N = round(M / ratio)
+    if config.ratio is not None:
+        instances = [
+            (round(M / config.ratio), M, k, base_seed + idx)
+            for idx, M in enumerate(
+                M for M in range(min_M, max_M + 1, step_M)
+                for _ in range(config.num_formulas)
+            )
+        ]
+    else:
+        N = config.num_global_variables
+        instances = [
+            (N, M, k, base_seed + idx)
+            for idx, M in enumerate(
+                M for M in range(min_M, max_M + 1, step_M)
+                for _ in range(config.num_formulas)
+            )
+        ]
 
     # Seleção dinâmica do solver conforme o tipo escolhido
     if solver_type == SolverType.MAXSAT:
