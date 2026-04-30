@@ -51,7 +51,7 @@ def update_progress_ui(
     Atualiza os componentes visuais de progresso durante a execução.
 
     Essa função reflete o estado atual do processamento na interface,
-    sendo chamada conforme novas instâncias são resolvidas.
+    chamada conforme novas instâncias são resolvidas.
 
     Parâmetros:
     - done: quantidade de instâncias já processadas
@@ -124,7 +124,7 @@ def start_timer(
     - state: objeto que controla o estado da execução (running/stop)
     """
 
-    def update() -> None:
+    def update(_: object = None) -> None:
         if not state.running:
             return
 
@@ -132,6 +132,6 @@ def start_timer(
         label.config(text=f"Tempo de execução: {elapsed:.2f} s")
 
         # Agenda a próxima atualização sem bloquear a UI (loop assíncrono)
-        label.after(100, update)
+        label.after(100, update, None)
 
     update()

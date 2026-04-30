@@ -5,8 +5,8 @@ def generate_random_cnf(num_vars: int, num_clauses: int, k: int) -> list[list[in
     """
     Gera uma fórmula CNF aleatória do tipo k-SAT.
 
-    Cada fórmula é composta por `num_clauses` cláusulas, onde cada cláusula
-    contém exatamente `k` literais distintos. As variáveis são escolhidas
+    Cada fórmula é composta por 'num_clauses' cláusulas, onde cada cláusula
+    contém exatamente 'k' literais distintos. As variáveis são escolhidas
     aleatoriamente sem repetição dentro de cada cláusula, garantindo que
     não ocorram redundâncias como (x ∨ x).
 
@@ -20,13 +20,13 @@ def generate_random_cnf(num_vars: int, num_clauses: int, k: int) -> list[list[in
     - k: número de literais por cláusula
 
     Regras garantidas:
-    - Não há repetição de variáveis dentro de uma mesma cláusula
+    - Não há repetição de variáveis numa mesma cláusula
     - Cada cláusula possui exatamente k literais
     - Literais podem ser positivos (x) ou negativos (¬x), definidos aleatoriamente
 
     Retorno:
     - Lista de cláusulas, onde cada cláusula é representada por uma lista de inteiros
-      (ex: [[1, -3, 4], [-2, 5, -1], ...])
+      (ex: [[1, −3, 4], [-2, 5, −1], ...])
     """
 
     # Validação: não é possível selecionar k variáveis distintas se k > num_vars

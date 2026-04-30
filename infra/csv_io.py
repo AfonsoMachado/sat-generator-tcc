@@ -16,7 +16,7 @@ class CSVResultWriter:
     Características:
     - Escrita linha a linha (streaming)
     - Flush imediato após cada registro (garante persistência)
-    - Suporte a uso com context manager (`with`)
+    - Suporte a uso com context manager ('with')
 
     Estrutura do arquivo:
     - solver: tipo de solver utilizado
@@ -58,7 +58,7 @@ class CSVResultWriter:
         - result: objeto contendo M, tempo e satisfazibilidade
 
         Observação:
-        O uso de `flush()` garante que os dados sejam gravados imediatamente
+        O uso de 'flush()' garante que os dados sejam gravados imediatamente
         no disco, reduzindo risco de perda em execuções longas.
         """
         self._writer.writerow([solver_type, result.M, result.elapsed, result.satisf])
@@ -104,7 +104,7 @@ def load_results_from_csv(filepath: str | Path) -> list[ExperimentResult]:
     - filepath: caminho do arquivo CSV a ser lido
 
     Retorno:
-    - Lista de `ExperimentResult`, reconstruindo os dados originais
+    - Lista de 'ExperimentResult', reconstruindo os dados originais
 
     Regras de leitura:
     - Ignora o cabeçalho automaticamente
@@ -112,8 +112,8 @@ def load_results_from_csv(filepath: str | Path) -> list[ExperimentResult]:
     - Desconsidera linhas inválidas ou mal formatadas
 
     Observação:
-    O campo `solver` é ignorado na reconstrução, pois o modelo atual
-    (`ExperimentResult`) não armazena essa informação.
+    O campo 'solver' é ignorado na reconstrução, pois o modelo atual
+    ('ExperimentResult') não armazena essa informação.
     """
 
     results: list[ExperimentResult] = []

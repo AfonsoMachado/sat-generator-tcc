@@ -28,7 +28,7 @@ def generate_formulas_set(
     Gera e resolve um conjunto de instâncias SAT/Max-SAT de forma paralela.
 
     Essa função representa o núcleo da execução experimental, sendo responsável por:
-    - Gerar instâncias a partir dos parâmetros definidos em `SATConfig`
+    - Gerar instâncias a partir dos parâmetros definidos em 'SATConfig'
     - Distribuir a execução entre múltiplos processos (paralelismo)
     - Coletar resultados incrementalmente
     - Atualizar a interface via callbacks (progresso e resultados)
@@ -37,7 +37,7 @@ def generate_formulas_set(
     Fluxo geral:
     1. Geração das instâncias (combinação de M e amostras)
     2. Seleção do solver conforme o tipo (MaxSAT / Partial / Weighted)
-    3. Execução paralela via `ProcessPoolExecutor`
+    3. Execução paralela via 'ProcessPoolExecutor'
     4. Coleta incremental dos resultados conforme finalização das tarefas
     5. Atualização de progresso e retorno final consolidado
 
@@ -49,7 +49,7 @@ def generate_formulas_set(
     - should_stop: função opcional para interrupção antecipada da execução
 
     Retorno:
-    - Lista de resultados (`SolverResult`) contendo (M, tempo, satisfazibilidade)
+    - Lista de resultados ('SolverResult') contendo (M, tempo, satisfazibilidade)
 
     Observações importantes:
     - A execução utiliza paralelismo baseado em CPU (~70% dos núcleos disponíveis)

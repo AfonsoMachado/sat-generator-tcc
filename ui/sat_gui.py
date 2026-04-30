@@ -136,15 +136,10 @@ def run_experiment(
                         return False
 
                     if timer_started_at is None:
-                        timer_started_at = time.perf_counter()
+                        now = time.perf_counter()
+                        timer_started_at = now
                         frame_graph.after(0, hide_loading, loading_spinner)
-                        frame_graph.after(
-                            0,
-                            start_timer,
-                            label_timer,
-                            timer_started_at,
-                            execution_state,
-                        )
+                        frame_graph.after(0, start_timer, label_timer, now, execution_state)
 
                     assert timer_started_at is not None
                     elapsed = time.perf_counter() - timer_started_at

@@ -171,7 +171,7 @@ def test_clauses_step_reduces_instance_count():
     )
 
     # step=1 → M ∈ {2,3,4,5,6} → 5 × 2 = 10 instâncias
-    # step=2 → M ∈ {2,4,6}     → 3 × 2 =  6 instâncias
+    # step=2 → M ∈ {2,4,6} → 3 × 2 = 6 instâncias
     assert len(results_step1) == 10
     assert len(results_step2) == 6
 

@@ -149,7 +149,7 @@ def extract_plot_series(stats: list[AggregatedStats]) -> tuple[
     """
     Extrai séries numéricas a partir das estatísticas agregadas.
 
-    Essa função transforma objetos estruturados (`AggregatedStats`)
+    Essa função transforma objetos estruturados ('AggregatedStats')
     em listas simples, adequadas para uso direto em gráficos.
 
     Retorna:
@@ -196,7 +196,7 @@ def calculate_x_limits(m_values: list[int]) -> tuple[float, float]:
 
 def render_plot(frame: ttk.Frame, fig: plt.Figure) -> None:
     """
-    Renderiza uma figura matplotlib dentro de um frame Tkinter.
+    Renderiza uma figura matplotlib num frame Tkinter.
 
     Essa função faz a ponte entre matplotlib e a interface gráfica,
     permitindo exibir gráficos dinamicamente na aplicação.

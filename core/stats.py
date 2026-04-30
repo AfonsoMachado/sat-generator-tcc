@@ -21,11 +21,11 @@ def aggregate_results(data: list[ExperimentResult]) -> list[AggregatedStats]:
     - Desvio padrão da satisfazibilidade (em percentual)
 
     Parâmetros:
-    - data: lista de resultados individuais (`ExperimentResult`),
+    - data: lista de resultados individuais ('ExperimentResult'),
       onde cada elemento representa uma instância resolvida
 
     Retorno:
-    - Lista de `AggregatedStats`, contendo métricas consolidadas por valor de M,
+    - Lista de 'AggregatedStats', contendo métricas consolidadas por valor de M,
       ordenadas crescentemente.
 
     Observação:
