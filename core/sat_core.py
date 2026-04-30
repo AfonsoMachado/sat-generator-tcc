@@ -98,7 +98,7 @@ def generate_formulas_set(
     results: list[SolverResult] = []
 
     # Define número de workers (70% da CPU disponível)
-    cpu = os.cpu_count()
+    cpu = os.cpu_count() or 1
     max_workers = max(1, int(cpu * 0.7))
 
     with ProcessPoolExecutor(max_workers=max_workers) as executor:

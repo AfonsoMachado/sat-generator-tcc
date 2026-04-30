@@ -1,6 +1,5 @@
 import time
 from dataclasses import dataclass
-from typing import Tuple
 
 
 @dataclass
@@ -24,7 +23,7 @@ class SATConfig:
     """
 
     num_formulas: int
-    clauses_range: Tuple[int, int]
+    clauses_range: tuple[int, int]
     k_literals_per_clause: int
     num_global_variables: int = 0
     seed: int | None = None

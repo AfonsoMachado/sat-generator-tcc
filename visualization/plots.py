@@ -77,6 +77,7 @@ def create_combined_chart(
 
     fig, ax1 = plt.subplots(figsize=(7, 4))
 
+    ax1.set_title("Satisfazibilidade e Tempo de resolução")
     ax1.set_xlabel("Número de cláusulas (M)")
     ax1.set_ylabel("Satisfazibilidade (%)", color="blue")
     ax1.plot(m_values, avg_sat, color="blue", marker=marker, markersize=3, label="Satisfazibilidade")
@@ -212,6 +213,7 @@ def render_plot(frame: ttk.Frame, fig: plt.Figure) -> None:
     canvas = FigureCanvasTkAgg(fig, master=frame)
     canvas.draw()
     canvas.get_tk_widget().pack(fill="both", expand=True, pady=10)
+    plt.close(fig)
 
 
 def create_satisfiability_chart(

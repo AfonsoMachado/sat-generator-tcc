@@ -53,13 +53,14 @@ def aggregate_results(data: list[ExperimentResult]) -> list[AggregatedStats]:
         sats = [item.satisf for item in values]
 
         # Calcula métricas estatísticas
+        ddof = 1 if len(values) > 1 else 0
         aggregated.append(
             AggregatedStats(
                 M=M,
                 avg_time=float(np.mean(times)),
-                std_time=float(np.std(times)),
+                std_time=float(np.std(times, ddof=ddof)),
                 avg_sat_percent=float(np.mean(sats) * 100),
-                std_sat_percent=float(np.std(sats) * 100),
+                std_sat_percent=float(np.std(sats, ddof=ddof) * 100),
             )
         )
 

@@ -166,7 +166,7 @@ def run_experiment(
                 experiment_inputs.to_sat_config(),
                 progress_callback=progress,
                 result_callback=collect_result,
-                solver_type=experiment_inputs.solver_type,
+                solver_type=SolverType(experiment_inputs.solver_type),
                 should_stop=execution_state.should_stop,
             )
 
@@ -395,9 +395,6 @@ def build_status_section(root: tk.Tk) -> tuple[ttk.Progressbar, ttk.Label, ttk.L
     """
     loading_frame = ttk.Frame(root)
     loading_frame.pack()
-
-    loading_label = ttk.Label(loading_frame, text="")
-    loading_label.pack_forget()  # mantido apenas se quiser usar depois
 
     loading_spinner = ttk.Progressbar(
         loading_frame,
