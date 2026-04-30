@@ -1,4 +1,3 @@
-import functools
 import threading
 import time
 import tkinter as tk
@@ -182,8 +181,6 @@ def run_experiment(
                     markers_var.get(),
                 )
 
-            frame_graph.after(0, functools.partial(run_button.config, state="normal"))
-
         except RuntimeError as exc:
             execution_state.finish()
 
@@ -198,8 +195,6 @@ def run_experiment(
             else:
                 frame_graph.after(0, messagebox.showerror, "Erro", str(exc))
 
-            frame_graph.after(0, functools.partial(run_button.config, state="normal"))
-
         except Exception as exc:
             execution_state.finish()
             frame_graph.after(
@@ -208,10 +203,10 @@ def run_experiment(
                 "Erro",
                 f"Falha ao executar experimento:\n{exc}",
             )
-            frame_graph.after(0, functools.partial(run_button.config, state="normal"))
 
         finally:
             frame_graph.after(0, hide_loading, loading_spinner)
+            frame_graph.after(0, run_button.state, ["!disabled"])
 
     threading.Thread(target=worker, daemon=True).start()
 
