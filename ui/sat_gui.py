@@ -1,3 +1,4 @@
+import functools
 import threading
 import time
 import tkinter as tk
@@ -151,14 +152,13 @@ def run_experiment(
 
                     frame_graph.after(
                         0,
-                        lambda: update_progress_ui(
-                            done,
-                            total,
-                            elapsed,
-                            label_timer,
-                            label_progress,
-                            progress_bar,
-                        ),
+                        update_progress_ui,
+                        done,
+                        total,
+                        elapsed,
+                        label_timer,
+                        label_progress,
+                        progress_bar,
                     )
 
                     return True
@@ -174,37 +174,41 @@ def run_experiment(
             execution_state.finish()
 
             if partial_results:
-                show_markers = markers_var.get()
                 frame_graph.after(
                     0,
-                    lambda m=show_markers: draw_graphs(frame_graph, partial_results, m),
+                    draw_graphs,
+                    frame_graph,
+                    partial_results,
+                    markers_var.get(),
                 )
 
-            frame_graph.after(0, lambda: run_button.config(state="normal"))
+            frame_graph.after(0, functools.partial(run_button.config, state="normal"))
 
         except RuntimeError as exc:
             execution_state.finish()
 
             if str(exc) == "STOP_REQUESTED":
-                show_markers = markers_var.get()
                 frame_graph.after(
                     0,
-                    lambda m=show_markers: draw_graphs(frame_graph, partial_results, m),
+                    draw_graphs,
+                    frame_graph,
+                    partial_results,
+                    markers_var.get(),
                 )
             else:
-                frame_graph.after(0, lambda err=exc: messagebox.showerror("Erro", str(err)))
+                frame_graph.after(0, messagebox.showerror, "Erro", str(exc))
 
-            frame_graph.after(0, lambda: run_button.config(state="normal"))
+            frame_graph.after(0, functools.partial(run_button.config, state="normal"))
 
         except Exception as exc:
             execution_state.finish()
             frame_graph.after(
                 0,
-                lambda err=exc: messagebox.showerror(
-                    "Erro", f"Falha ao executar experimento:\n{err}"
-                ),
+                messagebox.showerror,
+                "Erro",
+                f"Falha ao executar experimento:\n{exc}",
             )
-            frame_graph.after(0, lambda: run_button.config(state="normal"))
+            frame_graph.after(0, functools.partial(run_button.config, state="normal"))
 
         finally:
             frame_graph.after(0, hide_loading, loading_spinner)
