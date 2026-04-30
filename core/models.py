@@ -37,7 +37,7 @@ class ExperimentInputs:
     Representa os parâmetros de entrada fornecidos pelo usuário para execução do experimento.
 
     Essa classe funciona como uma camada intermediária entre a interface (UI)
-    e a configuração interna (`SATConfig`), além de fornecer utilitários auxiliares
+    e a configuração interna (SATConfig), além de fornecer utilitários auxiliares
     como geração de nomes de arquivos.
 
     Parâmetros:
@@ -64,7 +64,7 @@ class ExperimentInputs:
 
     def to_sat_config(self) -> SATConfig:
         """
-        Converte os parâmetros de entrada em um objeto `SATConfig`.
+        Converte os parâmetros de entrada em um objeto SATConfig.
 
         Essa conversão padroniza os dados para consumo pelas camadas internas
         do sistema, desacoplando a entrada do usuário da lógica de execução.

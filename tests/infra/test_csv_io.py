@@ -15,7 +15,7 @@ def test_csv_write_and_read(tmp_path):
     writer.close()
 
     # WHEN
-    data = load_results_from_csv(filepath)  # type: ignore
+    data = load_results_from_csv(filepath)
 
     # THEN
     assert len(data) == 1

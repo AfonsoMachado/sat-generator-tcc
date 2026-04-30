@@ -92,7 +92,7 @@ class CSVResultWriter:
         self.close()
 
 
-def load_results_from_csv(filepath: str) -> list[ExperimentResult]:
+def load_results_from_csv(filepath: str | Path) -> list[ExperimentResult]:
     """
     Carrega resultados previamente salvos em um arquivo CSV.
 

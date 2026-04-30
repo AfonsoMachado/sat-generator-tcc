@@ -29,13 +29,13 @@ def parse_inputs(
     Lê e valida os parâmetros informados pelo usuário na interface gráfica.
 
     Essa função extrai os valores dos campos de entrada (Entry widgets),
-    realiza conversões de tipo e constrói um objeto `ExperimentInputs`,
+    realiza conversões de tipo e constrói um objeto 'ExperimentInputs',
     que será utilizado na execução do experimento.
 
     Tratamento especial:
     - A seed é opcional: caso não informada, será considerada como None,
       permitindo geração aleatória posterior.
-    - O modo "N fixo" usa o campo `vars`; o modo "Razão M/N" usa o campo `ratio`.
+    - O modo "N fixo" usa o campo 'vars'; o modo "Razão M/N" usa o campo 'ratio'.
 
     Parâmetros:
     - entries: dicionário contendo os campos da interface
@@ -43,7 +43,7 @@ def parse_inputs(
     - mode_var: variável do toggle "n" / "ratio"
 
     Retorno:
-    - Objeto `ExperimentInputs` com os parâmetros do experimento
+    - Objeto 'ExperimentInputs' com os parâmetros do experimento
     """
     seed_raw = entries["seed"].get().strip()
     step_raw = entries["step_clauses"].get().strip()
@@ -86,13 +86,13 @@ def run_experiment(
 
     Estratégia de execução:
     - O processamento ocorre em uma thread paralela (worker)
-    - A interface é atualizada via `frame.after` (thread-safe no Tkinter)
+    - A interface é atualizada via 'frame.after' (thread-safe no Tkinter)
     - Resultados são armazenados incrementalmente em memória e em disco
 
     Componentes principais:
-    - `collect_result`: callback para tratamento de cada resultado individual
-    - `progress`: callback de progresso (UI + controle de tempo)
-    - `generate_formulas_set`: motor de execução paralela
+    - 'collect_result': callback para tratamento de cada resultado individual
+    - 'progress': callback de progresso (UI + controle de tempo)
+    - 'generate_formulas_set': motor de execução paralela
 
     Tratamento de erros:
     - Interrupção controlada (STOP_REQUESTED)
@@ -111,98 +111,103 @@ def run_experiment(
     reset_ui(frame_graph, label_timer, label_progress, progress_bar)
 
     partial_results: list[ExperimentResult] = []
-    timer_started_at: dict[str, float | None] = {"value": None}
+    timer_started_at: float | None = None
 
     def worker() -> None:
-        writer: CSVResultWriter | None = None
-
+        nonlocal timer_started_at
         try:
             experiment_inputs = parse_inputs(entries, solver_var, mode_var)
             filepath = OUTPUT_DIR / experiment_inputs.build_output_filename()
 
-            writer = CSVResultWriter(filepath)
+            with CSVResultWriter(filepath) as writer:
 
-            def collect_result(raw_result: tuple[int, float, float]) -> None:
-                result = ExperimentResult(
-                    M=raw_result[0],
-                    elapsed=raw_result[1],
-                    satisf=raw_result[2],
-                )
-                partial_results.append(result)
-                writer.write(experiment_inputs.solver_type, result)
+                def collect_result(raw_result: tuple[int, float, float]) -> None:
+                    result = ExperimentResult(
+                        M=raw_result[0],
+                        elapsed=raw_result[1],
+                        satisf=raw_result[2],
+                    )
+                    partial_results.append(result)
+                    writer.write(experiment_inputs.solver_type, result)
 
-            def progress(done: int, total: int) -> bool:
-                if execution_state.should_stop():
-                    return False
+                def progress(done: int, total: int) -> bool:
+                    nonlocal timer_started_at
+                    if execution_state.should_stop():
+                        return False
 
-                if timer_started_at["value"] is None:
-                    timer_started_at["value"] = time.perf_counter()
-                    frame_graph.after(0, hide_loading, loading_spinner)
+                    if timer_started_at is None:
+                        timer_started_at = time.perf_counter()
+                        frame_graph.after(0, hide_loading, loading_spinner)
+                        frame_graph.after(
+                            0,
+                            start_timer,
+                            label_timer,
+                            timer_started_at,
+                            execution_state,
+                        )
+
+                    assert timer_started_at is not None
+                    elapsed = time.perf_counter() - timer_started_at
+
                     frame_graph.after(
                         0,
-                        start_timer,
-                        label_timer,
-                        timer_started_at["value"],
-                        execution_state,
+                        lambda: update_progress_ui(
+                            done,
+                            total,
+                            elapsed,
+                            label_timer,
+                            label_progress,
+                            progress_bar,
+                        ),
                     )
 
-                elapsed = time.perf_counter() - timer_started_at["value"]  # type: ignore[operator]
+                    return True
 
-                frame_graph.after(
-                    0,
-                    lambda: update_progress_ui(
-                        done,
-                        total,
-                        elapsed,
-                        label_timer,
-                        label_progress,
-                        progress_bar,
-                    ),
-                )  # type: ignore
-
-                return True
-
-            generate_formulas_set(
-                experiment_inputs.to_sat_config(),
-                progress_callback=progress,
-                result_callback=collect_result,
-                solver_type=SolverType(experiment_inputs.solver_type),
-                should_stop=execution_state.should_stop,
-            )
+                generate_formulas_set(
+                    experiment_inputs.to_sat_config(),
+                    progress_callback=progress,
+                    result_callback=collect_result,
+                    solver_type=SolverType(experiment_inputs.solver_type),
+                    should_stop=execution_state.should_stop,
+                )
 
             execution_state.finish()
 
             if partial_results:
                 show_markers = markers_var.get()
-                frame_graph.after(0,
-                                  lambda m=show_markers: draw_graphs(frame_graph, partial_results, m))  # type: ignore
+                frame_graph.after(
+                    0,
+                    lambda m=show_markers: draw_graphs(frame_graph, partial_results, m),
+                )
 
-            frame_graph.after(0, lambda: run_button.config(state="normal"))  # type: ignore
+            frame_graph.after(0, lambda: run_button.config(state="normal"))
 
         except RuntimeError as exc:
             execution_state.finish()
 
             if str(exc) == "STOP_REQUESTED":
                 show_markers = markers_var.get()
-                frame_graph.after(0,
-                                  lambda m=show_markers: draw_graphs(frame_graph, partial_results, m))  # type: ignore
+                frame_graph.after(
+                    0,
+                    lambda m=show_markers: draw_graphs(frame_graph, partial_results, m),
+                )
             else:
-                frame_graph.after(0, lambda err=exc: messagebox.showerror("Erro", str(err)))  # type: ignore
+                frame_graph.after(0, lambda err=exc: messagebox.showerror("Erro", str(err)))
 
-            frame_graph.after(0, lambda: run_button.config(state="normal"))  # type: ignore
+            frame_graph.after(0, lambda: run_button.config(state="normal"))
 
         except Exception as exc:
             execution_state.finish()
             frame_graph.after(
                 0,
-                lambda err=exc: messagebox.showerror("Erro", f"Falha ao executar experimento:\n{err}"),
-            )  # type: ignore
-            frame_graph.after(0, lambda: run_button.config(state="normal"))  # type: ignore
+                lambda err=exc: messagebox.showerror(
+                    "Erro", f"Falha ao executar experimento:\n{err}"
+                ),
+            )
+            frame_graph.after(0, lambda: run_button.config(state="normal"))
 
         finally:
-            if writer is not None:
-                writer.close()
-            frame_graph.after(0, lambda: hide_loading(loading_spinner))  # type: ignore
+            frame_graph.after(0, hide_loading, loading_spinner)
 
     threading.Thread(target=worker, daemon=True).start()
 
@@ -220,7 +225,7 @@ def load_data_and_plot(frame_graph: ttk.Frame, markers_var: tk.BooleanVar) -> No
 
     Fluxo:
     - Abre um seletor de arquivos
-    - Lê os dados via `load_results_from_csv`
+    - Lê os dados via 'load_results_from_csv'
     - Renderiza os gráficos com base nos dados carregados
 
     Tratamento:
@@ -480,7 +485,7 @@ def build_buttons_section(
 
     Observações:
     - O botão de execução é desabilitado durante o processamento
-    - O botão "Parar" utiliza controle via estado global (`execution_state`)
+    - O botão "Parar" utiliza controle via estado global ('execution_state')
     """
     button_frame = ttk.Frame(root)
     button_frame.pack(pady=10)
@@ -531,7 +536,7 @@ def gui_runner() -> tk.Tk:
     - Estrutura principal da aplicação
 
     Retorno:
-    - Instância configurada do Tkinter (`Tk`), pronta para execução
+    - Instância configurada do Tkinter ('Tk'), pronta para execução
     """
     root = tk.Tk()
     root.title("Experimento Max-SAT RC2")

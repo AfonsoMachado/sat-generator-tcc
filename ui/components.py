@@ -132,6 +132,6 @@ def start_timer(
         label.config(text=f"Tempo de execução: {elapsed:.2f} s")
 
         # Agenda a próxima atualização sem bloquear a UI (loop assíncrono)
-        label.after(100, update)  # type: ignore
+        label.after(100, update)
 
     update()
