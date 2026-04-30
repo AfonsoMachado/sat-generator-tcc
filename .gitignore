@@ -1,4 +1,6 @@
 *.csv
 .idea
 .ai
-*.pyc
+.claude
+
+__pycache__/

@@ -1,3 +1,4 @@
+from pathlib import Path
 from tkinter import ttk
 
 from matplotlib import pyplot as plt, ticker
@@ -71,6 +72,10 @@ def create_combined_chart(
     - stats: estatísticas agregadas por M
     - show_markers: exibe marcadores nos pontos
     """
+    render_plot(frame, _build_combined_figure(stats, show_markers))
+
+
+def _build_combined_figure(stats: list[AggregatedStats], show_markers: bool) -> plt.Figure:
     marker = "o" if show_markers else None
     m_values, avg_times, _, avg_sat, _ = extract_plot_series(stats)
     x_left, x_right = calculate_x_limits(m_values)
@@ -95,8 +100,7 @@ def create_combined_chart(
 
     fig.legend(lines, labels, loc="upper center", ncol=2)
     fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.9))
-
-    render_plot(frame, fig)
+    return fig
 
 
 def create_time_chart(
@@ -120,6 +124,10 @@ def create_time_chart(
     - stats: estatísticas agregadas
     - show_markers: exibe marcadores nos pontos
     """
+    render_plot(frame, _build_time_figure(stats, show_markers))
+
+
+def _build_time_figure(stats: list[AggregatedStats], show_markers: bool) -> plt.Figure:
     m_values, avg_times, _, _, _ = extract_plot_series(stats)
     x_left, x_right = calculate_x_limits(m_values)
 
@@ -141,7 +149,7 @@ def create_time_chart(
     ax.legend()
 
     fig.tight_layout()
-    render_plot(frame, fig)
+    return fig
 
 
 def extract_plot_series(stats: list[AggregatedStats]) -> tuple[
@@ -216,28 +224,7 @@ def render_plot(frame: ttk.Frame, fig: plt.Figure) -> None:
     plt.close(fig)
 
 
-def create_satisfiability_chart(
-        frame: ttk.Frame,
-        stats: list[AggregatedStats],
-        show_markers: bool = True,
-) -> None:
-    """
-    Cria o gráfico de satisfazibilidade média.
-
-    Esse gráfico é fundamental para identificar a transição de fase,
-    mostrando a variação da porcentagem de cláusulas satisfeitas
-    conforme o aumento de M.
-
-    Características:
-    - Eixo Y em percentual
-    - Linha com marcadores
-    - Escala adaptativa
-
-    Parâmetros:
-    - frame: container de renderização
-    - stats: estatísticas agregadas
-    - show_markers: exibe marcadores nos pontos
-    """
+def _build_satisfiability_figure(stats: list[AggregatedStats], show_markers: bool) -> plt.Figure:
     m_values, _, _, avg_sat, _ = extract_plot_series(stats)
     x_left, x_right = calculate_x_limits(m_values)
 
@@ -260,7 +247,61 @@ def create_satisfiability_chart(
     ax.legend()
 
     fig.tight_layout()
-    render_plot(frame, fig)
+    return fig
+
+
+def create_satisfiability_chart(
+        frame: ttk.Frame,
+        stats: list[AggregatedStats],
+        show_markers: bool = True,
+) -> None:
+    """
+    Cria o gráfico de satisfazibilidade média.
+
+    Esse gráfico é fundamental para identificar a transição de fase,
+    mostrando a variação da porcentagem de cláusulas satisfeitas
+    conforme o aumento de M.
+
+    Características:
+    - Eixo Y em percentual
+    - Linha com marcadores
+    - Escala adaptativa
+
+    Parâmetros:
+    - frame: container de renderização
+    - stats: estatísticas agregadas
+    - show_markers: exibe marcadores nos pontos
+    """
+    render_plot(frame, _build_satisfiability_figure(stats, show_markers))
+
+
+def _build_time_std_figure(stats: list[AggregatedStats], show_markers: bool) -> plt.Figure:
+    m_values, avg_times, std_times, _, _ = extract_plot_series(stats)
+    x_left, x_right = calculate_x_limits(m_values)
+
+    fig, ax = plt.subplots(figsize=(7, 4))
+
+    ax.set_title("Tempo médio com desvio padrão")
+    ax.set_xlabel("Número de cláusulas (M)")
+    ax.set_ylabel("Tempo médio (s)", color="orange")
+    ax.errorbar(
+        m_values,
+        avg_times,
+        yerr=std_times,
+        fmt="-o" if show_markers else "-",
+        markersize=3,
+        color="orange",
+        ecolor="gray",
+        elinewidth=1,
+        capsize=3,
+        label="Tempo médio ± desvio padrão",
+    )
+    ax.tick_params(axis="y", labelcolor="orange")
+    ax.set_xlim(x_left, x_right)
+    ax.legend()
+
+    fig.tight_layout()
+    return fig
 
 
 def create_time_std_chart(
@@ -288,29 +329,32 @@ def create_time_std_chart(
     - stats: estatísticas agregadas
     - show_markers: exibe marcadores nos pontos
     """
-    m_values, avg_times, std_times, _, _ = extract_plot_series(stats)
-    x_left, x_right = calculate_x_limits(m_values)
+    render_plot(frame, _build_time_std_figure(stats, show_markers))
 
-    fig, ax = plt.subplots(figsize=(7, 4))
 
-    ax.set_title("Tempo médio com desvio padrão")
-    ax.set_xlabel("Número de cláusulas (M)")
-    ax.set_ylabel("Tempo médio (s)", color="orange")
-    ax.errorbar(
-        m_values,
-        avg_times,
-        yerr=std_times,
-        fmt="-o" if show_markers else "-",
-        markersize=3,
-        color="orange",
-        ecolor="gray",
-        elinewidth=1,
-        capsize=3,
-        label="Tempo médio ± desvio padrão",
-    )
-    ax.tick_params(axis="y", labelcolor="orange")
-    ax.set_xlim(x_left, x_right)
-    ax.legend()
+def save_graphs(
+        data: list[ExperimentResult],
+        show_markers: bool,
+        directory: Path,
+) -> None:
+    """
+    Salva todos os gráficos do experimento como arquivos PNG em um diretório.
 
-    fig.tight_layout()
-    render_plot(frame, fig)
+    Parâmetros:
+    - data: resultados do experimento
+    - show_markers: exibe marcadores nos pontos
+    - directory: pasta de destino dos arquivos
+    """
+    if not data:
+        return
+
+    stats = aggregate_results(data)
+    exports = [
+        ("grafico_combinado", _build_combined_figure(stats, show_markers)),
+        ("satisfazibilidade", _build_satisfiability_figure(stats, show_markers)),
+        ("tempo_medio", _build_time_figure(stats, show_markers)),
+        ("tempo_desvio_padrao", _build_time_std_figure(stats, show_markers)),
+    ]
+    for name, fig in exports:
+        fig.savefig(directory / f"{name}.png", dpi=150, bbox_inches="tight")
+        plt.close(fig)

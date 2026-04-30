@@ -14,7 +14,7 @@ from ui.components import (
     update_progress_ui,
 )
 from utils import stop_experiment, execution_state
-from visualization import draw_graphs
+from visualization import draw_graphs, save_graphs
 
 OUTPUT_DIR = Path("./resultados")
 OUTPUT_DIR.mkdir(exist_ok=True)
@@ -73,6 +73,7 @@ def run_experiment(
         loading_spinner: ttk.Progressbar,
         markers_var: tk.BooleanVar,
         mode_var: tk.StringVar,
+        last_results: list[ExperimentResult],
 ) -> None:
     """
     Executa o experimento em uma thread separada, mantendo a interface responsiva.
@@ -168,11 +169,13 @@ def run_experiment(
             execution_state.finish()
 
             if partial_results:
+                last_results.clear()
+                last_results.extend(partial_results)
                 frame_graph.after(
                     0,
                     draw_graphs,
                     frame_graph,
-                    partial_results,
+                    last_results,
                     markers_var.get(),
                 )
 
@@ -180,11 +183,13 @@ def run_experiment(
             execution_state.finish()
 
             if str(exc) == "STOP_REQUESTED":
+                last_results.clear()
+                last_results.extend(partial_results)
                 frame_graph.after(
                     0,
                     draw_graphs,
                     frame_graph,
-                    partial_results,
+                    last_results,
                     markers_var.get(),
                 )
             else:
@@ -210,7 +215,11 @@ def run_experiment(
 # CARREGAMENTO DE DADOS
 # ============================================================
 
-def load_data_and_plot(frame_graph: ttk.Frame, markers_var: tk.BooleanVar) -> None:
+def load_data_and_plot(
+        frame_graph: ttk.Frame,
+        markers_var: tk.BooleanVar,
+        last_results: list[ExperimentResult],
+) -> None:
     """
     Permite carregar resultados previamente salvos e reconstruir os gráficos.
 
@@ -240,7 +249,9 @@ def load_data_and_plot(frame_graph: ttk.Frame, markers_var: tk.BooleanVar) -> No
     try:
         data = load_results_from_csv(filepath)
         if data:
-            draw_graphs(frame_graph, data, markers_var.get())
+            last_results.clear()
+            last_results.extend(data)
+            draw_graphs(frame_graph, last_results, markers_var.get())
         else:
             messagebox.showwarning("Aviso", "Nenhum dado válido foi encontrado no arquivo.")
     except Exception as exc:
@@ -250,6 +261,23 @@ def load_data_and_plot(frame_graph: ttk.Frame, markers_var: tk.BooleanVar) -> No
 # ============================================================
 # CONSTRUÇÃO DA INTERFACE
 # ============================================================
+
+def _save_graphs_dialog(
+        last_results: list[ExperimentResult],
+        markers_var: tk.BooleanVar,
+) -> None:
+    if not last_results:
+        messagebox.showwarning("Aviso", "Nenhum resultado disponível para salvar.")
+        return
+    directory = filedialog.askdirectory(title="Selecionar pasta para salvar os gráficos")
+    if not directory:
+        return
+    try:
+        save_graphs(last_results, markers_var.get(), Path(directory))
+        messagebox.showinfo("Salvo", f"Gráficos salvos em:\n{directory}")
+    except Exception as exc:
+        messagebox.showerror("Erro", f"Falha ao salvar gráficos:\n{exc}")
+
 
 def create_labeled_entry(
         parent: ttk.Frame,
@@ -468,6 +496,7 @@ def build_buttons_section(
         loading_spinner: ttk.Progressbar,
         markers_var: tk.BooleanVar,
         mode_var: tk.StringVar,
+        last_results: list[ExperimentResult],
 ) -> None:
     """
     Constrói a seção de botões de controle da aplicação.
@@ -476,6 +505,7 @@ def build_buttons_section(
     - "Carregar dados": abre CSV e renderiza gráficos
     - "Executar Experimento": inicia execução completa
     - "Parar": interrompe execução em andamento
+    - "Salvar Gráficos": exporta os gráficos gerados como PNG
 
     Observações:
     - O botão de execução é desabilitado durante o processamento
@@ -487,7 +517,7 @@ def build_buttons_section(
     ttk.Button(
         button_frame,
         text="Carregar dados",
-        command=lambda: load_data_and_plot(frame_graph, markers_var),
+        command=lambda: load_data_and_plot(frame_graph, markers_var, last_results),
     ).pack(side="left", padx=5)
 
     run_button = ttk.Button(button_frame, text="Executar Experimento")
@@ -505,6 +535,7 @@ def build_buttons_section(
             loading_spinner=loading_spinner,
             markers_var=markers_var,
             mode_var=mode_var,
+            last_results=last_results,
         )
     )
 
@@ -512,6 +543,12 @@ def build_buttons_section(
         button_frame,
         text="Parar",
         command=stop_experiment,
+    ).pack(side="left", padx=5)
+
+    ttk.Button(
+        button_frame,
+        text="Salvar Gráficos",
+        command=lambda: _save_graphs_dialog(last_results, markers_var),
     ).pack(side="left", padx=5)
 
 
@@ -538,6 +575,7 @@ def gui_runner() -> tk.Tk:
     _, entries, solver_var, markers_var, mode_var = build_inputs_section(root)
     loading_spinner, label_timer, label_progress, progress_bar = build_status_section(root)
     frame_graph = build_graph_section(root)
+    last_results: list[ExperimentResult] = []
 
     build_buttons_section(
         root=root,
@@ -550,6 +588,7 @@ def gui_runner() -> tk.Tk:
         loading_spinner=loading_spinner,
         markers_var=markers_var,
         mode_var=mode_var,
+        last_results=last_results,
     )
 
     return root
